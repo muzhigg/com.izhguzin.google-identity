@@ -52,8 +52,8 @@ namespace Izhguzin.GoogleIdentity
 
             try
             {
-                if (TryLoadToken(out string token))
-                    PerformSignInFromToken(token);
+                if (TryLoadCredential(out UserCredential credential))
+                    PerformSignInFromToken(credential);
                 else
                     PerformSignIn(proofKey, state);
             }
@@ -69,9 +69,9 @@ namespace Izhguzin.GoogleIdentity
             PlayerPrefs.DeleteKey(PrefsKey);
         }
 
-        private void PerformSignInFromToken(string jwtToken)
+        private void PerformSignInFromToken(UserCredential credential)
         {
-            InvokeOnSuccessCallback(DeserializeCredential(jwtToken));
+            InvokeOnSuccessCallback(credential);
         }
 
         private bool CanBeginSignIn()
@@ -145,9 +145,8 @@ namespace Izhguzin.GoogleIdentity
                 await tokenRequest.SendWebRequest();
                 HandleTokenResponse(tokenRequest);
 
-                TokenResponse response =
-                    StringDeserializationAPI.Deserialize<TokenResponse>(tokenRequest.downloadHandler.text);
-                InvokeOnSuccessCallback(DeserializeCredential(response.IdToken));
+                TokenResponse response = DeserializeTokenResponse(tokenRequest.downloadHandler.text);
+                InvokeOnSuccessCallback(DeserializeCredential(response));
             }
             catch (Exception exception)
             {
@@ -156,14 +155,29 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
-        private static UserCredential DeserializeCredential(string idToken)
+        private static TokenResponse DeserializeTokenResponse(string token)
+        {
+            try
+            {
+                TokenResponse response = StringSerializationAPI.Deserialize<TokenResponse>(token);
+                return response;
+            }
+            catch (Exception exception)
+            {
+                throw new GoogleSignInException(ErrorCode.Error,
+                    $"Error deserializing JSON response: {exception.Message}", exception);
+            }
+        }
+
+        private static UserCredential DeserializeCredential(TokenResponse response)
         {
             try
             {
                 UserCredential credential =
-                    StringDeserializationAPI.Deserialize<UserCredential>(JwtDecoder.GetPayload(idToken));
+                    StringSerializationAPI.Deserialize<UserCredential>(JwtDecoder.GetPayload(response.IdToken));
+                credential.Token = response;
 
-                SaveToken(idToken);
+                SaveCredential(credential);
                 return credential;
             }
             catch (Exception exception)
@@ -173,28 +187,25 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
-        private static void SaveToken(string jwtToken)
+        private static void SaveCredential(UserCredential credential)
         {
-            string encodedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(jwtToken));
+            string tokenJson    = StringSerializationAPI.Serialize<TokenResponse>(credential.Token);
+            string encodedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenJson));
             PlayerPrefs.SetString(PrefsKey, encodedToken);
         }
 
-        private static bool TryLoadToken(out string jwtToken)
+        private static bool TryLoadCredential(out UserCredential credential)
         {
-            jwtToken = null;
+            credential = null;
 
-            if (PlayerPrefs.HasKey(PrefsKey))
-            {
-                string encodedToken = PlayerPrefs.GetString(PrefsKey);
+            if (!PlayerPrefs.HasKey(PrefsKey)) return false;
 
-                if (!string.IsNullOrEmpty(encodedToken))
-                {
-                    jwtToken = Encoding.UTF8.GetString(Convert.FromBase64String(encodedToken));
-                    return true;
-                }
-            }
+            string encodedString = PlayerPrefs.GetString(PrefsKey);
+            string decodedToken  = Encoding.UTF8.GetString(Convert.FromBase64String(encodedString));
 
-            return false;
+            TokenResponse response = DeserializeTokenResponse(decodedToken);
+            credential = DeserializeCredential(response);
+            return true;
         }
 
         private void HandleTokenResponse(UnityWebRequest tokenRequest)

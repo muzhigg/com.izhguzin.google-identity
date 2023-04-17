@@ -4,7 +4,7 @@ using Unity.VisualScripting.FullSerializer;
 namespace Izhguzin.GoogleIdentity
 {
     [Serializable, fsObject]
-    public sealed class TokenResponse
+    internal sealed class TokenResponse
     {
         internal const int TokenRefreshTimeWindowSeconds    = 60 * 6;
         internal const int TokenHardExpiryTimeWindowSeconds = 60 * 5;
@@ -53,7 +53,7 @@ namespace Izhguzin.GoogleIdentity
         [fsProperty("token_type")]
         public string TokenType { get; internal set; }
 
-        public DateTime IssuedUtc { get; }
+        [fsProperty("iss")] public DateTime IssuedUtc { get; internal set; }
 
         public bool IsExpired()
         {

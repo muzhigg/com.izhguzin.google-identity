@@ -3,9 +3,17 @@ using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
 {
-    internal static class StringDeserializationAPI
+    internal static class StringSerializationAPI
     {
         private static readonly fsSerializer _serializer = new();
+
+        public static string Serialize<T>(object value)
+        {
+            fsResult result = _serializer.TrySerialize(typeof(T), value, out fsData data);
+            result.AssertSuccess();
+
+            return fsJsonPrinter.CompressedJson(data);
+        }
 
         public static T Deserialize<T>(string json) where T : class
         {
