@@ -108,7 +108,7 @@ namespace Izhguzin.GoogleIdentity
             return clientId;
         }
 
-        internal static bool UseS256GenerationMethod(this SignInOptions options)
+        internal static bool GetUseS256GenerationMethod(this SignInOptions options)
         {
             if (options.TryGetOption(CodeChallengeGenerationMethodKey,
                     out bool useS256GenerationMethod) == false) useS256GenerationMethod = true;

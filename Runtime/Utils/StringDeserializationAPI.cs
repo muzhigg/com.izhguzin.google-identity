@@ -5,12 +5,12 @@ namespace Izhguzin.GoogleIdentity
 {
     internal static class StringDeserializationAPI
     {
-        private static readonly fsSerializer Serializer = new();
+        private static readonly fsSerializer _serializer = new();
 
         public static T Deserialize<T>(string json) where T : class
         {
             object   deserializedToken = null;
-            fsResult result = Serializer.TryDeserialize(fsJsonParser.Parse(json), typeof(T), ref deserializedToken);
+            fsResult result = _serializer.TryDeserialize(fsJsonParser.Parse(json), typeof(T), ref deserializedToken);
             result.AssertSuccess();
 
             if (deserializedToken is not T response)

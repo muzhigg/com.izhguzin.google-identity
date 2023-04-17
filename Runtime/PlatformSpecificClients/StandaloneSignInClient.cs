@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -34,53 +33,49 @@ namespace Izhguzin.GoogleIdentity
 
         private const string AuthorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
 
-        private StandaloneHttpCodeListener _listener;
-        private bool                       _inProgress;
+        private const string PrefsKey = "gsi.user";
 
         #endregion
 
-        public StandaloneSignInClient(SignInOptions options, Action<UserCredential> onSuccessCallback,
-            Action                                  onFailureCallback) : base(options,
+        public StandaloneSignInClient(SignInOptions options, OnSuccessCallback onSuccessCallback,
+            OnFailureCallback                       onFailureCallback) : base(options,
             onSuccessCallback, onFailureCallback) { }
-
-        public override bool InProgress()
-        {
-            return _inProgress;
-        }
 
         public override void BeginSignIn()
         {
+            base.BeginSignIn();
+
             if (!CanBeginSignIn()) return;
 
-            _inProgress = true;
-            ProofKey proofKey = new(options.UseS256GenerationMethod());
+            ProofKey proofKey = new(options.GetUseS256GenerationMethod());
             string   state    = PKCECodeProvider.GetRandomBase64URL(32);
 
             try
             {
-                PerformSignIn(proofKey, state);
+                if (TryLoadToken(out string token))
+                    PerformSignInFromToken(token);
+                else
+                    PerformSignIn(proofKey, state);
             }
-            catch (GoogleSignInException)
+            catch (GoogleSignInException exception)
             {
-                InvokeOnFailureCallback();
+                InvokeOnFailureCallback(exception.ErrorCode);
                 throw;
             }
         }
 
-        private void InvokeOnFailureCallback()
+        public override void SignOut()
         {
-            _inProgress = false;
-            onFailureCallback.Invoke();
+            PlayerPrefs.DeleteKey(PrefsKey);
+        }
+
+        private void PerformSignInFromToken(string jwtToken)
+        {
+            InvokeOnSuccessCallback(DeserializeCredential(jwtToken));
         }
 
         private bool CanBeginSignIn()
         {
-            if (_inProgress)
-            {
-                Debug.LogError("Sign-in process already in progress");
-                return false;
-            }
-
             if (!UnityMainThread.IsRunningOnMainThread())
             {
                 Debug.LogError("Method BeginSignIn() can only be called from the main thread.");
@@ -92,9 +87,8 @@ namespace Izhguzin.GoogleIdentity
 
         private async Task PerformSignIn(ProofKey proofKey, string state)
         {
-            string redirectUri = $"http://{IPAddress.Loopback}:{GetAvailablePort()}/";
-            Debug.Log(redirectUri);
-            StandaloneHttpCodeListener listener = new(redirectUri, options.GetResponseHtml());
+            string                     redirectUri = $"http://{IPAddress.Loopback}:{GetAvailablePort()}/";
+            StandaloneHttpCodeListener listener    = new(redirectUri, options.GetResponseHtml());
             Application.OpenURL(BuildAuthUrl(redirectUri, proofKey, state));
             try
             {
@@ -103,7 +97,7 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (GoogleSignInException exception)
             {
-                InvokeOnFailureCallback();
+                InvokeOnFailureCallback(exception.ErrorCode);
                 Debug.LogException(exception);
             }
         }
@@ -126,7 +120,7 @@ namespace Izhguzin.GoogleIdentity
             string clientId = options.GetClientId();
 
             if (string.IsNullOrEmpty(clientId))
-                throw new GoogleSignInException(
+                throw new GoogleSignInException(ErrorCode.DeveloperError,
                     $"Client ID not set in {typeof(SignInOptions)}.");
 
             return clientId;
@@ -151,45 +145,67 @@ namespace Izhguzin.GoogleIdentity
                 await tokenRequest.SendWebRequest();
                 HandleTokenResponse(tokenRequest);
 
-                InvokeOnSuccessCallback(GetCredential(tokenRequest.downloadHandler.text));
+                TokenResponse response =
+                    StringDeserializationAPI.Deserialize<TokenResponse>(tokenRequest.downloadHandler.text);
+                InvokeOnSuccessCallback(DeserializeCredential(response.IdToken));
             }
             catch (Exception exception)
             {
-                throw new GoogleSignInException(
+                throw new GoogleSignInException(ErrorCode.ResponseError,
                     $"Failed to exchange authorization code for access token: {exception.Message}", exception);
             }
         }
 
-        private void InvokeOnSuccessCallback(UserCredential credential)
+        private static UserCredential DeserializeCredential(string idToken)
         {
-            _inProgress = false;
-            onSuccessCallback.Invoke(credential);
+            try
+            {
+                UserCredential credential =
+                    StringDeserializationAPI.Deserialize<UserCredential>(JwtDecoder.GetPayload(idToken));
+
+                SaveToken(idToken);
+                return credential;
+            }
+            catch (Exception exception)
+            {
+                throw new GoogleSignInException(ErrorCode.Error,
+                    $"Error deserializing JSON response: {exception.Message}", exception);
+            }
+        }
+
+        private static void SaveToken(string jwtToken)
+        {
+            string encodedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(jwtToken));
+            PlayerPrefs.SetString(PrefsKey, encodedToken);
+        }
+
+        private static bool TryLoadToken(out string jwtToken)
+        {
+            jwtToken = null;
+
+            if (PlayerPrefs.HasKey(PrefsKey))
+            {
+                string encodedToken = PlayerPrefs.GetString(PrefsKey);
+
+                if (!string.IsNullOrEmpty(encodedToken))
+                {
+                    jwtToken = Encoding.UTF8.GetString(Convert.FromBase64String(encodedToken));
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void HandleTokenResponse(UnityWebRequest tokenRequest)
         {
             if (tokenRequest.result != UnityWebRequest.Result.Success)
-                throw new GoogleSignInException($"Token request failed with error: {tokenRequest.error}");
+                throw new GoogleSignInException(ErrorCode.ResponseError,
+                    $"Token request failed with error: {tokenRequest.error}");
 
             if (tokenRequest.responseCode != 200)
-                throw new GoogleSignInException(
+                throw new GoogleSignInException(ErrorCode.ResponseError,
                     $"Token request failed with status code {tokenRequest.responseCode} and message: {tokenRequest.downloadHandler.text}");
-        }
-
-        private static UserCredential GetCredential(string jsonResponse)
-        {
-            try
-            {
-                TokenResponse response = StringDeserializationAPI.Deserialize<TokenResponse>(jsonResponse);
-                UserCredential credential =
-                    StringDeserializationAPI.Deserialize<UserCredential>(JwtDecoder.GetPayload(response.IdToken));
-                credential.Token = response;
-                return credential;
-            }
-            catch (Exception exception)
-            {
-                throw new GoogleSignInException($"Error deserializing JSON response: {exception.Message}", exception);
-            }
         }
 
         private string GetClientSecret()
@@ -197,7 +213,7 @@ namespace Izhguzin.GoogleIdentity
             string clientSecret = options.GetClientSecret();
 
             if (string.IsNullOrEmpty(clientSecret))
-                throw new GoogleSignInException(
+                throw new GoogleSignInException(ErrorCode.DeveloperError,
                     $"Client Secret not set in {typeof(SignInOptions)}.");
 
             return clientSecret;
@@ -217,7 +233,8 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (Exception e)
             {
-                throw new GoogleSignInException($"Error occurred in Sign In Client: {e.Message}");
+                throw new GoogleSignInException(ErrorCode.NetworkError,
+                    $"Error occurred in Sign In Client: {e.Message}", e);
             }
         }
 
@@ -236,15 +253,5 @@ namespace Izhguzin.GoogleIdentity
                 throw new Exception("Failed to get a random unused port.", ex);
             }
         }
-
-#if UNITY_STANDALONE_WIN
-
-        [DllImport("user32.dll")]
-        internal static extern IntPtr SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-#endif
     }
 }

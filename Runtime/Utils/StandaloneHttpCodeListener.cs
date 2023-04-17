@@ -26,7 +26,7 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (HttpListenerException exception)
             {
-                throw new GoogleSignInException(
+                throw new GoogleSignInException(ErrorCode.NetworkError,
                     $"Error occurred in HttpListener: Failed to add prefix {uri}: {exception.Message}");
             }
         }
@@ -39,7 +39,7 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (HttpListenerException ex)
             {
-                throw new GoogleSignInException($"Error occurred in HttpListener: {ex.Message}",
+                throw new GoogleSignInException(ErrorCode.NetworkError, $"Error occurred in HttpListener: {ex.Message}",
                     new HttpListenerException(ex.ErrorCode,
                         $"Failed to start listening for incoming requests: {ex.Message}"));
             }
@@ -47,7 +47,8 @@ namespace Izhguzin.GoogleIdentity
             Task                      timeoutTask   = Task.Delay(TimeSpan.FromMinutes(1));
             Task<HttpListenerContext> contextTask   = _httpListener.GetContextAsync();
             Task                      completedTask = await Task.WhenAny(contextTask, timeoutTask);
-            if (completedTask == timeoutTask) throw new GoogleSignInException("Timeout waiting for incoming requests.");
+            if (completedTask == timeoutTask)
+                throw new GoogleSignInException(ErrorCode.Timeout, "Timeout waiting for incoming requests.");
 
             HttpListenerContext context = contextTask.Result;
             await ProcessResponseAsync(context, state, callback);
@@ -56,10 +57,11 @@ namespace Izhguzin.GoogleIdentity
         private void CheckForErrors(NameValueCollection query)
         {
             if (query.Get("error") != null)
-                throw new GoogleSignInException($"OAuth authorization error: {query.Get("error")}.");
+                throw new GoogleSignInException(ErrorCode.ResponseError,
+                    $"OAuth authorization error: {query.Get("error")}.");
 
             if (query.Get("code") == null || query.Get("state") == null)
-                throw new GoogleSignInException("Malformed authorization response. " + query);
+                throw new GoogleSignInException(ErrorCode.ResponseError, "Malformed authorization response. " + query);
         }
 
         private async Task ProcessResponseAsync(HttpListenerContext context, string state, Action<string> callback)
@@ -72,7 +74,8 @@ namespace Izhguzin.GoogleIdentity
                 string incomingState = query.Get("state");
 
                 if (incomingState != state)
-                    throw new GoogleSignInException($"Received request with invalid state ({incomingState})");
+                    throw new GoogleSignInException(ErrorCode.ResponseError,
+                        $"Received request with invalid state ({incomingState})");
 
                 await SendResponseAsync(context);
                 _httpListener.Stop();
@@ -97,8 +100,8 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (InvalidOperationException exception)
             {
-                throw new GoogleSignInException($"Error occurred in HttpListenerResponse: {exception.Message}",
-                    exception);
+                throw new GoogleSignInException(ErrorCode.ResponseError,
+                    $"Error occurred in HttpListenerResponse: {exception.Message}", exception);
             }
             finally
             {

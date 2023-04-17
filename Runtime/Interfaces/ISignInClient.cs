@@ -4,5 +4,6 @@ namespace Izhguzin.GoogleIdentity
     {
         public bool InProgress();
         public void BeginSignIn();
+        public void SignOut();
     }
 }
