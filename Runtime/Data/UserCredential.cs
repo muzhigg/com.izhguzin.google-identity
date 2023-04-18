@@ -1,12 +1,13 @@
 using System;
 using Unity.VisualScripting.FullSerializer;
-using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
 {
     [Serializable, fsObject]
     public sealed class UserCredential
     {
+        internal UserCredential() { }
+
         public string GetJWT()
         {
             return Token.IdToken;
@@ -15,7 +16,6 @@ namespace Izhguzin.GoogleIdentity
         public bool IsExpired()
         {
             DateTimeOffset expiresAt = DateTimeOffset.FromUnixTimeSeconds(ExpirationTime);
-            Debug.Log($"ff: {Token.IsExpired()}");
             return DateTimeOffset.UtcNow > expiresAt;
         }
 
