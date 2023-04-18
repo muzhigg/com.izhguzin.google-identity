@@ -69,6 +69,81 @@ namespace Izhguzin.GoogleIdentity
             PlayerPrefs.DeleteKey(PrefsKey);
         }
 
+        public override void RefreshToken(UserCredential credential, OnSuccessCallback callback)
+        {
+            if (!CanBeginSignIn()) return;
+
+            Debug.Log("Refresh");
+
+            RefreshTokenAsync(credential, callback);
+        }
+
+        public override void RevokeAccess(UserCredential credential)
+        {
+            if (!CanBeginSignIn()) return;
+
+            RevokeAccessAsync1(credential);
+        }
+
+        private SignInAsyncOperation RevokeAccessAsync1(UserCredential credential)
+        {
+            SignInAsyncOperation asyncOperation = new();
+            RevokeAccessAsync(credential, asyncOperation);
+
+            return asyncOperation;
+        }
+
+        private async Task RevokeAccessAsync(UserCredential credential, SignInAsyncOperation asyncOperation)
+        {
+            string tokenRequestBody = $"token={credential.Token.AccessToken}";
+
+            using UnityWebRequest tokenRequest = new("https://oauth2.googleapis.com/revoke", "POST")
+            {
+                uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(tokenRequestBody))
+                {
+                    contentType = "application/x-www-form-urlencoded"
+                },
+                downloadHandler = new DownloadHandlerBuffer()
+            };
+            await tokenRequest.SendWebRequest();
+
+            asyncOperation.IsDone = true;
+        }
+
+        private async Task RefreshTokenAsync(UserCredential credential, OnSuccessCallback callback)
+        {
+            Debug.LogWarning(credential.Token.RefreshToken);
+            string tokenRequestBody =
+                $"client_id={GetClientId()}&client_secret={GetClientSecret()}&refresh_token={credential.Token.RefreshToken}&grant_type=refresh_token";
+
+            try
+            {
+                Debug.Log("Start");
+                using UnityWebRequest tokenRequest = new("https://oauth2.googleapis.com/token", "POST")
+                {
+                    uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(tokenRequestBody))
+                    {
+                        contentType = "application/x-www-form-urlencoded"
+                    },
+                    downloadHandler = new DownloadHandlerBuffer()
+                };
+                Debug.Log("Start2");
+                await tokenRequest.SendWebRequest();
+                Debug.Log("Start3");
+                Debug.Log(tokenRequest.result);
+                Debug.Log(tokenRequest.responseCode);
+                Debug.Log(tokenRequest.downloadHandler.text);
+                HandleTokenResponse(tokenRequest);
+                Debug.Log("Start4");
+                Debug.Log(tokenRequest.downloadHandler.text);
+            }
+            catch (Exception exception)
+            {
+                throw new GoogleSignInException(ErrorCode.ResponseError,
+                    $"Failed to refresh authorization code for access token: {exception.Message}", exception);
+            }
+        }
+
         private void PerformSignInFromToken(UserCredential credential)
         {
             InvokeOnSuccessCallback(credential);
@@ -146,6 +221,7 @@ namespace Izhguzin.GoogleIdentity
                 HandleTokenResponse(tokenRequest);
 
                 TokenResponse response = DeserializeTokenResponse(tokenRequest.downloadHandler.text);
+                Debug.Log(tokenRequest.downloadHandler.text);
                 InvokeOnSuccessCallback(DeserializeCredential(response));
             }
             catch (Exception exception)

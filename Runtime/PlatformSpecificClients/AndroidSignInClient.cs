@@ -59,6 +59,16 @@ namespace Izhguzin.GoogleIdentity
             throw new NotImplementedException();
         }
 
+        public override void RefreshToken(UserCredential credential, OnSuccessCallback callback)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void RevokeAccess(UserCredential credential)
+        {
+            throw new NotImplementedException();
+        }
+
         private void OnFailureCallback(ErrorCode errorCode, string errorMessage)
         {
             InvokeOnFailureCallback(errorCode);

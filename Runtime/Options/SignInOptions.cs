@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -5,16 +6,59 @@ namespace Izhguzin.GoogleIdentity
 {
     public class SignInOptions
     {
+        public class Builder : IOptionsBuilder
+        {
+            #region Fileds and Properties
+
+            private readonly SignInOptions _options;
+
+            #endregion
+
+            public Builder()
+            {
+                _options = new SignInOptions();
+            }
+
+            public SignInOptions Build()
+            {
+                return _options;
+            }
+
+            /// <summary>
+            ///     Adds standalone platform options to the sign-in options. If you have already added options for this platform
+            ///     before, builder will overwrite them.
+            /// </summary>
+            /// <returns>The current instance of the builder.</returns>
+            public StandaloneSignInOptions.Builder AddStandaloneOptions()
+            {
+                return new StandaloneSignInOptions.Builder(_options);
+            }
+
+            /// <summary>
+            ///     Adds Android platform options to the sign in options. If you have already added options for this platform before,
+            ///     builder will overwrite them.
+            /// </summary>
+            /// <returns>The current instance of the builder.</returns>
+            public AndroidSignInOptions.Builder AddAndroidOptions()
+            {
+                return new AndroidSignInOptions.Builder(_options);
+            }
+        }
+
         #region Fileds and Properties
 
         internal const string RootClientIdKey     = "root-client-id";
         internal const string RootClientSecretKey = "root-client-secret";
 
-        internal IDictionary<string, object> Values { get; }
+
+        [Obsolete] internal IDictionary<string, object> Values { get; }
+
+        private StandaloneSignInOptions _standaloneOptions;
+        private AndroidSignInOptions    _androidOptions;
 
         #endregion
 
-        public SignInOptions()
+        private SignInOptions()
         {
             Values = new Dictionary<string, object>();
         }
@@ -51,6 +95,16 @@ namespace Izhguzin.GoogleIdentity
         {
             Values[key] = value;
             return this;
+        }
+
+        public void AddAndroidOptions(AndroidSignInOptions androidSignInOptions)
+        {
+            _androidOptions = androidSignInOptions;
+        }
+
+        internal void AddStandaloneOptions(StandaloneSignInOptions standaloneSignInOptions)
+        {
+            _standaloneOptions = standaloneSignInOptions;
         }
     }
 }

@@ -40,6 +40,8 @@ namespace Izhguzin.GoogleIdentity
         }
 
         public abstract void SignOut();
+        public abstract void RefreshToken(UserCredential credential, OnSuccessCallback callback);
+        public abstract void RevokeAccess(UserCredential credential);
 
         public static GoogleSignInClient CreateInstance(SignInOptions options, OnSuccessCallback onSuccessCallback,
             OnFailureCallback                                         onFailureCallback)
