@@ -41,9 +41,9 @@ namespace Izhguzin.GoogleIdentity
             OnFailureCallback                       onFailureCallback) : base(options,
             onSuccessCallback, onFailureCallback) { }
 
-        public override void BeginSignIn()
+        public override void BeginSignInOld()
         {
-            base.BeginSignIn();
+            base.BeginSignInOld();
 
             if (!CanBeginSignIn()) return;
 
@@ -64,12 +64,12 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
-        public override void SignOut()
+        public override void SignOutOld()
         {
             PlayerPrefs.DeleteKey(PrefsKey);
         }
 
-        public override void RefreshToken(UserCredential credential, OnSuccessCallback callback)
+        public override void RefreshTokenOld(UserCredential credential, OnSuccessCallback callback)
         {
             if (!CanBeginSignIn()) return;
 
@@ -78,7 +78,7 @@ namespace Izhguzin.GoogleIdentity
             RefreshTokenAsync(credential, callback);
         }
 
-        public override void RevokeAccess(UserCredential credential)
+        public override void RevokeAccessOld(UserCredential credential)
         {
             if (!CanBeginSignIn()) return;
 
@@ -153,7 +153,7 @@ namespace Izhguzin.GoogleIdentity
         {
             if (!UnityMainThread.IsRunningOnMainThread())
             {
-                Debug.LogError("Method BeginSignIn() can only be called from the main thread.");
+                Debug.LogError("Method BeginSignInOld() can only be called from the main thread.");
                 return false;
             }
 

@@ -7,6 +7,8 @@ namespace Izhguzin.GoogleIdentity
     {
         #region Fileds and Properties
 
+        public UserCredential User { get; }
+
         protected readonly SignInOptions     options;
         protected          OnSuccessCallback onSuccessCallback;
         protected          OnFailureCallback onFailureCallback;
@@ -28,7 +30,7 @@ namespace Izhguzin.GoogleIdentity
             return _inProgress;
         }
 
-        public virtual void BeginSignIn()
+        public virtual void BeginSignInOld()
         {
             if (_inProgress)
             {
@@ -39,9 +41,9 @@ namespace Izhguzin.GoogleIdentity
             _inProgress = true;
         }
 
-        public abstract void SignOut();
-        public abstract void RefreshToken(UserCredential credential, OnSuccessCallback callback);
-        public abstract void RevokeAccess(UserCredential credential);
+        public abstract void SignOutOld();
+        public abstract void RefreshTokenOld(UserCredential credential, OnSuccessCallback callback);
+        public abstract void RevokeAccessOld(UserCredential credential);
 
         public static GoogleSignInClient CreateInstance(SignInOptions options, OnSuccessCallback onSuccessCallback,
             OnFailureCallback                                         onFailureCallback)

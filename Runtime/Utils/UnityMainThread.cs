@@ -79,7 +79,7 @@ namespace Izhguzin.GoogleIdentity
         private static void Init()
         {
             _mainThread = Thread.CurrentThread;
-            PlayerLoopSystemSubscription<Update> subscription = new PlayerLoopSystemSubscription<Update>(Update);
+            PlayerLoopSystemSubscription<Update> subscription = new(Update);
             Application.quitting += subscription.Dispose;
         }
 

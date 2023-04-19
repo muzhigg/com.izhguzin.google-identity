@@ -1,8 +1,11 @@
-﻿namespace Izhguzin.GoogleIdentity
+﻿using System;
+
+namespace Izhguzin.GoogleIdentity
 {
     public enum ErrorCode
     {
-        Other = 0,
+        [Obsolete] Other = 0,
+        Success          = 0,
 
         /// <summary>
         ///     The ResponseError occurs when there is an error in the response received from the Google authentication server,

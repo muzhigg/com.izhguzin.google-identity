@@ -1,14 +1,84 @@
 ﻿using System;
-using System.Collections;
+using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
 {
     public class SignInAsyncOperation
     {
-        private event Action Completed;
+        public event Action<SignInAsyncOperation> OnSuccess
+        {
+            add
+            {
+                bool shouldInvoke = false;
+
+                lock (_lockObject)
+                {
+                    if (IsDone)
+                    {
+                        if (Status == ErrorCode.Success) shouldInvoke = true;
+                    }
+                    else
+                    {
+                        _onSuccess += value;
+                    }
+                }
+
+                if (shouldInvoke) value(this);
+            }
+            remove => _onSuccess -= value;
+        }
+
+        public event Action<SignInAsyncOperation> OnFailure
+        {
+            add
+            {
+                bool shouldInvoke = false;
+
+                lock (_lockObject)
+                {
+                    if (IsDone)
+                    {
+                        if (Status != ErrorCode.Success) shouldInvoke = true;
+                    }
+                    else
+                    {
+                        _onFailure += value;
+                    }
+                }
+
+                if (shouldInvoke) value(this);
+            }
+            remove => _onFailure -= value;
+        }
+
+        public event Action<SignInAsyncOperation> OnComplete
+        {
+            add
+            {
+                bool shouldInvoke = false;
+
+                lock (_lockObject)
+                {
+                    if (IsDone)
+                        shouldInvoke = true;
+                    else
+                        _onComplete += value;
+                }
+
+                if (shouldInvoke) value(this);
+            }
+            remove => _onComplete -= value;
+        }
 
         #region Fileds and Properties
 
+        public GoogleSignInClient SignInClient { get; private set; }
+
+        public ErrorCode Status { get; private set; }
+
+        /// <summary>
+        ///     Has the operation finished? (Read Only)
+        /// </summary>
         public bool IsDone
         {
             get
@@ -18,38 +88,49 @@ namespace Izhguzin.GoogleIdentity
                     return _isDone;
                 }
             }
-            internal set
+            /*internal*/
+            set
             {
                 lock (_lockObject)
                 {
                     _isDone = value;
-                    if (_isDone) Completed?.Invoke();
+
+                    if (_isDone) InvokeCompletionEvent();
                 }
             }
         }
+
+        private Action<SignInAsyncOperation> _onComplete;
+        private Action<SignInAsyncOperation> _onSuccess;
+        private Action<SignInAsyncOperation> _onFailure;
 
         private          bool   _isDone;
         private readonly object _lockObject = new();
 
         #endregion
 
-        public IEnumerator WaitForCompletion()
+        internal void InvokeCompletionEvent()
         {
-            while (!IsDone) yield return null;
-        }
-
-        public void OnComplete(Action callback)
-        {
-            bool shouldInvoke = false;
-            lock (_lockObject)
+            if (!IsDone)
             {
-                if (_isDone)
-                    shouldInvoke = true;
-                else
-                    Completed += callback;
+                Debug.LogError(
+                    "Internal AsyncOperation error. Attempt to call completion event when operation is incomplete.");
+                return;
             }
 
-            if (shouldInvoke) callback?.Invoke();
+            if (Status == ErrorCode.Success)
+            {
+                _onSuccess?.Invoke(this);
+                _onSuccess = null;
+            }
+            else
+            {
+                _onFailure?.Invoke(this);
+                _onFailure = null;
+            }
+
+            _onComplete?.Invoke(this);
+            _onComplete = null;
         }
     }
 }

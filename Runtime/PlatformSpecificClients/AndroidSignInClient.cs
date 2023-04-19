@@ -33,9 +33,9 @@ namespace Izhguzin.GoogleIdentity
             //    new GoogleSignInClientProxy.OnFailureListener(OnFailureCallback));
         }
 
-        public override void BeginSignIn()
+        public override void BeginSignInOld()
         {
-            base.BeginSignIn();
+            base.BeginSignInOld();
 
             if (_inProgress)
             {
@@ -54,17 +54,17 @@ namespace Izhguzin.GoogleIdentity
             _proxy.BeginSignIn();
         }
 
-        public override void SignOut()
+        public override void SignOutOld()
         {
             throw new NotImplementedException();
         }
 
-        public override void RefreshToken(UserCredential credential, OnSuccessCallback callback)
+        public override void RefreshTokenOld(UserCredential credential, OnSuccessCallback callback)
         {
             throw new NotImplementedException();
         }
 
-        public override void RevokeAccess(UserCredential credential)
+        public override void RevokeAccessOld(UserCredential credential)
         {
             throw new NotImplementedException();
         }
