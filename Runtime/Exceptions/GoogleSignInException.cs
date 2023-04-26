@@ -6,19 +6,17 @@ namespace Izhguzin.GoogleIdentity
     {
         #region Fileds and Properties
 
-        public ErrorCode ErrorCode { get; }
+        public CommonStatus CommonStatus { get; }
 
         #endregion
 
-        [Obsolete]
-        public GoogleSignInException(string message) : base(message) { }
-
-        public GoogleSignInException(ErrorCode errorCode, string message) : base(message)
+        public GoogleSignInException(CommonStatus commonStatus, string message) : base(message)
         {
-            ErrorCode = errorCode;
+            CommonStatus = commonStatus;
         }
 
-        public GoogleSignInException(ErrorCode errorCode, string message, Exception innerException) : base(message,
+        public GoogleSignInException(CommonStatus commonStatus, string message, Exception innerException) : base(
+            message,
             innerException) { }
     }
 }

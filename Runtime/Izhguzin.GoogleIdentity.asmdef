@@ -2,8 +2,7 @@
     "name": "Izhguzin.GoogleIdentity",
     "rootNamespace": "Izhguzin.GoogleIdentity",
     "references": [
-        "GUID:21b0c8d1703a94250bfac916590cea4f",
-        "GUID:7645de096e51b7f48937118fe024b8a6"
+        "GUID:21b0c8d1703a94250bfac916590cea4f"
     ],
     "includePlatforms": [
         "Android",

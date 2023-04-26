@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 namespace Izhguzin.GoogleIdentity
 {
     public class SignInOptions
@@ -47,57 +43,18 @@ namespace Izhguzin.GoogleIdentity
 
         #region Fileds and Properties
 
-        internal const string RootClientIdKey     = "root-client-id";
-        internal const string RootClientSecretKey = "root-client-secret";
+        public StandaloneSignInOptions Standalone => _standaloneOptions ??= new StandaloneSignInOptions();
 
-
-        [Obsolete] internal IDictionary<string, object> Values { get; }
+        public AndroidSignInOptions Android => _androidOptions ??= new AndroidSignInOptions();
 
         private StandaloneSignInOptions _standaloneOptions;
         private AndroidSignInOptions    _androidOptions;
 
         #endregion
 
-        private SignInOptions()
-        {
-            Values = new Dictionary<string, object>();
-        }
+        private SignInOptions() { }
 
-        /// <summary>
-        ///     Stores the given <paramref name="value" /> for the given <paramref name="key" />.
-        /// </summary>
-        /// <param name="key">
-        ///     The identifier of the configuration entry.
-        /// </param>
-        /// <param name="value">
-        ///     The value to store.
-        /// </param>
-        /// <returns>
-        ///     Return this instance.
-        /// </returns>
-        public SignInOptions SetOption(string key, bool value)
-        {
-            Values[key] = value;
-            return this;
-        }
-
-        public bool TryGetOption<T>(string key, out T option)
-        {
-            option = default;
-
-            if (!Values.TryGetValue(key, out object rawValue) || rawValue is not T value) return false;
-
-            option = value;
-            return true;
-        }
-
-        public SignInOptions SetOption(string key, IEnumerable value)
-        {
-            Values[key] = value;
-            return this;
-        }
-
-        public void AddAndroidOptions(AndroidSignInOptions androidSignInOptions)
+        internal void AddAndroidOptions(AndroidSignInOptions androidSignInOptions)
         {
             _androidOptions = androidSignInOptions;
         }

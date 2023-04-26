@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
 {
-    public class StandaloneSignInOptions
+    public sealed class StandaloneSignInOptions
     {
         public sealed class Builder : IOptionsBuilder
         {
@@ -104,16 +104,23 @@ namespace Izhguzin.GoogleIdentity
 
         #region Fileds and Properties
 
+        internal const string DefaultResponseHtml =
+            "<html><head><meta http-equiv='refresh' content='10;url=https://google.com'></head><body>Please return to the app.</body></html>";
+
+        public bool UseS256GenerationMethod => true;
+
         public ReadOnlyCollection<int> Ports => _ports.AsReadOnly();
 
         public string ClientId { get; private set; }
 
         public string ClientSecret { get; private set; }
 
-        public string ResponseHtml { get; private set; }
+        public string ResponseHtml { get; private set; } = DefaultResponseHtml;
 
         private readonly List<int> _ports = new();
 
         #endregion
+
+        internal StandaloneSignInOptions() { }
     }
 }

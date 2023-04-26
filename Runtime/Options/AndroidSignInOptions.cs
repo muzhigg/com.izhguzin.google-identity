@@ -56,5 +56,7 @@ namespace Izhguzin.GoogleIdentity
         public string WebClientId { get; private set; }
 
         #endregion
+
+        internal AndroidSignInOptions() { }
     }
 }

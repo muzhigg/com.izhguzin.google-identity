@@ -1,4 +1,6 @@
 using System;
+using Izhguzin.GoogleIdentity.JWTDecoder;
+using Izhguzin.GoogleIdentity.Utils;
 using Unity.VisualScripting.FullSerializer;
 
 namespace Izhguzin.GoogleIdentity
@@ -7,6 +9,21 @@ namespace Izhguzin.GoogleIdentity
     public sealed class UserCredential
     {
         internal UserCredential() { }
+
+        internal static UserCredential FromJson(string json)
+        {
+            try
+            {
+                UserCredential credential =
+                    StringSerializationAPI.Deserialize<UserCredential>(json);
+
+                return credential;
+            }
+            catch (Exception exception)
+            {
+                throw new JsonDeserializationException($"Error deserializing JSON response: {exception.Message}");
+            }
+        }
 
         public string GetJWT()
         {
@@ -17,6 +34,12 @@ namespace Izhguzin.GoogleIdentity
         {
             DateTimeOffset expiresAt = DateTimeOffset.FromUnixTimeSeconds(ExpirationTime);
             return DateTimeOffset.UtcNow > expiresAt;
+        }
+
+        public override string ToString()
+        {
+            string result = Decoder.DecodeToken(GetJWT()).Payload;
+            return result;
         }
 
         #region Fileds and Properties

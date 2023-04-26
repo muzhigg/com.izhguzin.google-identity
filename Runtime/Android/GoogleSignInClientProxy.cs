@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Android
@@ -22,11 +22,11 @@ namespace Izhguzin.GoogleIdentity.Android
             // ReSharper disable once InconsistentNaming
             private void onFailure(int errorCode, string message)
             {
-                ErrorCode errorType = !Enum.IsDefined(typeof(ErrorCode), errorCode)
-                    ? ErrorCode.Other
-                    : (ErrorCode)errorCode;
+                //CommonStatus errorType = !Enum.IsDefined(typeof(CommonStatus), errorCode)
+                //    ? CommonStatus.Other
+                //    : (CommonStatus)errorCode;
 
-                _callback?.Invoke(errorType, message);
+                //_callback?.Invoke(errorType, message);
             }
         }
 
