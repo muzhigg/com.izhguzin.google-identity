@@ -9,6 +9,22 @@ namespace Izhguzin.GoogleIdentity.Standalone
 {
     internal class AuthorizationRequestUrl : RequestUrl
     {
+        private static int GetRandomUnusedPort()
+        {
+            try
+            {
+                TcpListener listener = new(IPAddress.Loopback, 0);
+                listener.Start();
+                int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+                listener.Stop();
+                return port;
+            }
+            catch (SocketException)
+            {
+                throw new Exception("Failed to get a random unused port.");
+            }
+        }
+
         internal readonly struct ProofKey
         {
             public readonly string codeVerifier;
@@ -44,19 +60,25 @@ namespace Izhguzin.GoogleIdentity.Standalone
 
         [RequestParameter("state", false)] public string State { get; set; }
 
+        [RequestParameter("prompt", false)] public string Prompt { get; set; }
+
+        [RequestParameter("access_type", false)]
+        public string AccessType { get; set; }
+
         public ProofKey ProofCodeKey { get; set; }
 
         public override string EndPointUrl => GoogleAuthConstants.AuthorizationUrl;
 
         #endregion
 
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="GoogleSignInException"></exception>
         public AuthorizationRequestUrl(StandaloneSignInOptions optionsStandalone)
         {
             optionsStandalone ??= new StandaloneSignInOptions();
 
-            ClientId = optionsStandalone.ClientId.ThrowIfNullOrEmpty(new GoogleSignInException(
-                CommonStatus.DeveloperError,
-                $"Client ID not set in {typeof(SignInOptions)}."));
+            ClientId = optionsStandalone.ClientId.ThrowIfNullOrEmpty(
+                new NullReferenceException($"Client ID not set in {typeof(SignInOptions)}."));
             RedirectUri         = $"http://{IPAddress.Loopback}:{GetAvailablePort(optionsStandalone)}/";
             ProofCodeKey        = new ProofKey(optionsStandalone.UseS256GenerationMethod);
             CodeChallenge       = ProofCodeKey.codeChallenge;
@@ -85,22 +107,6 @@ namespace Izhguzin.GoogleIdentity.Standalone
             {
                 throw new GoogleSignInException(CommonStatus.NetworkError,
                     $"Error occurred in Sign In Client: {e.Message}");
-            }
-        }
-
-        private static int GetRandomUnusedPort()
-        {
-            try
-            {
-                TcpListener listener = new(IPAddress.Loopback, 0);
-                listener.Start();
-                int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-                listener.Stop();
-                return port;
-            }
-            catch (SocketException)
-            {
-                throw new Exception("Failed to get a random unused port.");
             }
         }
     }

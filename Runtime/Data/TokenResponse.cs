@@ -1,7 +1,6 @@
 using System;
 using Izhguzin.GoogleIdentity.Utils;
 using Unity.VisualScripting.FullSerializer;
-using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
 {
@@ -67,6 +66,7 @@ namespace Izhguzin.GoogleIdentity
             return IssuedUtc.AddSeconds(ExpiresInSeconds - TokenHardExpiryTimeWindowSeconds) <= DateTime.UtcNow;
         }
 
+        /// <exception cref="JsonDeserializationException"></exception>
         internal static TokenResponse FromJson(string json)
         {
             try
@@ -85,20 +85,16 @@ namespace Izhguzin.GoogleIdentity
 
         internal string ToJson()
         {
-            return StringSerializationAPI.Serialize<TokenResponse>(this);
+            return StringSerializationAPI.Serialize(this);
         }
 
         private static void CheckProperties(TokenResponse response)
         {
-            GoogleSignInException exception = new(CommonStatus.ResponseError,
-                "The response from the server is not complete. Some properties have a null value.");
+            NullReferenceException exception =
+                new("The response from the server is not complete. Some properties have a null value.");
 
             response.AccessToken.ThrowIfNullOrEmpty(exception);
             response.IdToken.ThrowIfNullOrEmpty(exception);
-
-            if (string.IsNullOrEmpty(response.RefreshToken))
-                Debug.LogWarning(
-                    "No refresh token is found. To get it, call the SignOut method and then call the SignIn method again.");
         }
     }
 }

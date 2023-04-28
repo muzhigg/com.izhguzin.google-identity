@@ -16,6 +16,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
 
         #endregion
 
+        /// <exception cref="GoogleSignInException"></exception>
         public HttpCodeListener(string uri, string responseHtml)
         {
             _responseHtml = responseHtml;
@@ -31,6 +32,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
             }
         }
 
+        /// <exception cref="GoogleSignInException"></exception>
         public async Task<string> WaitForCodeAsync(string state)
         {
             string code = null;
@@ -38,6 +40,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
             return code;
         }
 
+        /// <exception cref="GoogleSignInException"></exception>
         public async Task StartAsync(string state, Action<string> callback)
         {
             try
@@ -73,6 +76,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
                 "Malformed authorization response. State value is null"));
         }
 
+        /// <exception cref="GoogleSignInException"></exception>
         private async Task ProcessResponseAsync(HttpListenerContext context, string state, Action<string> callback)
         {
             try

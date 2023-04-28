@@ -1,4 +1,5 @@
-﻿using Izhguzin.GoogleIdentity.Standalone;
+﻿using System;
+using Izhguzin.GoogleIdentity.Standalone;
 
 namespace Izhguzin.GoogleIdentity
 {
@@ -25,14 +26,15 @@ namespace Izhguzin.GoogleIdentity
 
         #endregion
 
+        /// <exception cref="NullReferenceException"></exception>
         public TokenRequestUrl(StandaloneSignInOptions options)
         {
-            ClientId = options.ClientId.ThrowIfNullOrEmpty(new GoogleSignInException(CommonStatus.DeveloperError,
-                $"Client ID not set in {typeof(SignInOptions)}."));
+            ClientId = options.ClientId.ThrowIfNullOrEmpty(
+                new NullReferenceException($"Client ID not set in {typeof(SignInOptions)}."));
 
-            ClientSecret = options.ClientSecret.ThrowIfNullOrEmpty(new GoogleSignInException(
-                CommonStatus.DeveloperError,
-                $"Client secret not set in {typeof(SignInOptions)}."));
+            ClientSecret =
+                options.ClientSecret.ThrowIfNullOrEmpty(
+                    new NullReferenceException($"Client secret not set in {typeof(SignInOptions)}."));
         }
     }
 }

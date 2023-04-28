@@ -13,6 +13,7 @@ namespace Izhguzin.GoogleIdentity.Utils
             return fsJsonPrinter.CompressedJson(data);
         }
 
+        /// <exception cref="JsonDeserializationException"></exception>
         public static T Deserialize<T>(string json)
         {
             object deserializedToken = null;

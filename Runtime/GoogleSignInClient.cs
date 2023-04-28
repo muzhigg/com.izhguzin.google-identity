@@ -31,16 +31,16 @@ namespace Izhguzin.GoogleIdentity
         {
             return commonStatus switch
             {
-                CommonStatus.ResponseError => "Google server response error. Try again later.",
-                CommonStatus.InvalidAccount => "Invalid account.",
-                CommonStatus.NetworkError => "Connection error. Try again later.",
-                CommonStatus.DeveloperError => "Developer error. Please check application configuration.",
-                CommonStatus.Error => "Unexpected error occurred.",
-                CommonStatus.Timeout => "Timeout while awaiting response. Try again later.",
-                CommonStatus.Canceled => "Operation canceled. Please try again.",
-                CommonStatus.DeserializationError => throw new NotImplementedException(),
-                CommonStatus.LoadingCachedUserError => throw new NotImplementedException(),
-                _ => throw new ArgumentOutOfRangeException(nameof(commonStatus), commonStatus, null)
+                CommonStatus.ResponseError          => "Google server response error. Try again later.",
+                CommonStatus.InvalidAccount         => "Invalid account.",
+                CommonStatus.NetworkError           => "Connection error. Try again later.",
+                CommonStatus.DeveloperError         => "Developer error. Please check application configuration.",
+                CommonStatus.Error                  => "Unexpected error occurred.",
+                CommonStatus.Timeout                => "Timeout while awaiting response. Try again later.",
+                CommonStatus.Canceled               => "Operation canceled.",
+                CommonStatus.DeserializationError   => "Deserialization Error.",
+                CommonStatus.LoadingCachedUserError => "Error when loading data. Please sign out and sign in again.",
+                _                                   => null
             };
         }
 
@@ -86,14 +86,8 @@ namespace Izhguzin.GoogleIdentity
 
             Task.Run(() =>
             {
-                if (InProgress())
-                {
-                    Debug.LogWarning("GoogleSignInClient is already performing the request.");
-                    InvokeOnComplete(asyncOp, CommonStatus.Canceled);
-                    return;
-                }
+                if (!CanBeginOperation(asyncOp)) return;
 
-                _inProgress = true;
                 CurrentUser = null;
                 UnityMainThread.RunOnMainThread(() => BeginSignIn(asyncOp));
             });
@@ -101,19 +95,50 @@ namespace Izhguzin.GoogleIdentity
             return asyncOp;
         }
 
+        public GoogleRequestAsyncOperation RefreshToken()
+        {
+            GoogleRequestAsyncOperation asyncOp = new(this);
+
+            Task.Run(() =>
+            {
+                if (!CanBeginOperation(asyncOp)) return;
+
+                UnityMainThread.RunOnMainThread(() => BeginRefreshToken(asyncOp));
+            });
+
+            return asyncOp;
+        }
+
+        public GoogleRequestAsyncOperation RevokeAccess()
+        {
+            GoogleRequestAsyncOperation asyncOp = new(this);
+
+            Task.Run(() =>
+            {
+                if (!CanBeginOperation(asyncOp)) return;
+
+                UnityMainThread.RunOnMainThread(() => BeginRevokeAccess(asyncOp));
+            });
+
+            return asyncOp;
+        }
+
         protected abstract void BeginSignIn(GoogleRequestAsyncOperation operation);
 
-        protected void InvokeOnComplete(UserCredential credential, GoogleRequestAsyncOperation asyncOp,
-            CommonStatus                               code)
+        protected abstract void BeginRefreshToken(GoogleRequestAsyncOperation operation);
+
+        protected abstract void BeginRevokeAccess(GoogleRequestAsyncOperation operation);
+
+        protected void InvokeOnSuccess(UserCredential credential, GoogleRequestAsyncOperation asyncOp)
         {
             CurrentUser = credential;
-            InvokeOnComplete(asyncOp, code);
+            InvokeOnComplete(asyncOp, CommonStatus.Success);
         }
 
         protected void InvokeOnComplete(GoogleRequestAsyncOperation asyncOp, CommonStatus code)
         {
-            Status = code;
-            if (code != CommonStatus.Success) asyncOp.Error = GenerateMessage(code);
+            Status        = code;
+            asyncOp.Error = GenerateMessage(code);
             UnityMainThread.RunOnMainThread(() => asyncOp.InvokeCompletionEvent(code));
             _inProgress = false;
         }
@@ -123,6 +148,19 @@ namespace Izhguzin.GoogleIdentity
         {
             InvokeOnComplete(asyncOperation, commonStatus);
             Debug.LogException(exception);
+        }
+
+        private bool CanBeginOperation(GoogleRequestAsyncOperation asyncOp)
+        {
+            if (InProgress())
+            {
+                Debug.LogWarning("GoogleSignInClient is already performing the request.");
+                InvokeOnComplete(asyncOp, CommonStatus.Canceled);
+                return false;
+            }
+
+            _inProgress = true;
+            return true;
         }
     }
 }

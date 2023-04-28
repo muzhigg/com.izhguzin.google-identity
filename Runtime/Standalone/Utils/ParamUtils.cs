@@ -5,6 +5,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
 {
     internal class ParamUtils
     {
+        /// <exception cref="GoogleSignInException"></exception>
         public static void IterateParameters(object request, Action<string, object> action)
         {
             foreach (PropertyInfo propertyInfo in request.GetType().GetProperties())

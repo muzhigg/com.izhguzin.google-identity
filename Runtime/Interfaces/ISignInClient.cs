@@ -16,5 +16,9 @@ namespace Izhguzin.GoogleIdentity
         ///     <para>On the WebGl platform, the way differs from the client options.</para>
         /// </summary>
         public GoogleRequestAsyncOperation SignIn();
+
+        public GoogleRequestAsyncOperation RefreshToken();
+
+        public GoogleRequestAsyncOperation RevokeAccess();
     }
 }

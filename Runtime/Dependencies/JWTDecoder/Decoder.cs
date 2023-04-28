@@ -36,19 +36,6 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
     public static class Decoder
     {
         /// <summary>
-        ///     Exception thrown when when a token does not consist of three parts delimited by dots (".").
-        /// </summary>
-        public class InvalidTokenPartsException : ArgumentOutOfRangeException
-        {
-            /// <summary>
-            ///     Creates an instance of <see cref="InvalidTokenPartsException" />
-            /// </summary>
-            /// <param name="paramName">The name of the parameter that caused the exception</param>
-            public InvalidTokenPartsException(string paramName)
-                : base(paramName, "Token must consist of 3 delimited by dot parts.") { }
-        }
-
-        /// <summary>
         ///     Decode the specified token.
         /// </summary>
         /// <returns>A tupal contained the decoded Header and Payload.</returns>
@@ -58,7 +45,8 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
             string[] split = token.Split('.');
             if (split.Length > 1)
             {
-                JwtHeader jsonHeaderData = StringSerializationAPI.Deserialize<JwtHeader>(split[0]);
+                JwtHeader jsonHeaderData =
+                    StringSerializationAPI.Deserialize<JwtHeader>(Base64DecodeToString(split[0]));
 
                 string jsonData = Base64DecodeToString(split[1]);
 
@@ -105,7 +93,7 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
                 IJwtAlgorithm alg = algorithmFactory.Create(tokenDecoded.Header.Algorithm);
 
                 byte[] bytesToSign = EncodingHelper.GetBytes(
-                    string.Concat(StringSerializationAPI.Serialize<JwtHeader>(tokenDecoded.Header), ".",
+                    string.Concat(StringSerializationAPI.Serialize(tokenDecoded.Header), ".",
                         tokenDecoded.Payload));
 
                 byte[] testSignature        = alg.Sign(secretBytes, bytesToSign);
@@ -164,6 +152,19 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
             {
                 throw new FormatException("The token contains invalid base64 characters.");
             }
+        }
+
+        /// <summary>
+        ///     Exception thrown when when a token does not consist of three parts delimited by dots (".").
+        /// </summary>
+        public class InvalidTokenPartsException : ArgumentOutOfRangeException
+        {
+            /// <summary>
+            ///     Creates an instance of <see cref="InvalidTokenPartsException" />
+            /// </summary>
+            /// <param name="paramName">The name of the parameter that caused the exception</param>
+            public InvalidTokenPartsException(string paramName)
+                : base(paramName, "Token must consist of 3 delimited by dot parts.") { }
         }
     }
 }

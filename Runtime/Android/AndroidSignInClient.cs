@@ -31,6 +31,16 @@ namespace Izhguzin.GoogleIdentity
             throw new NotImplementedException();
         }
 
+        protected override void BeginRefreshToken(GoogleRequestAsyncOperation operation)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void BeginRevokeAccess(GoogleRequestAsyncOperation operation)
+        {
+            throw new NotImplementedException();
+        }
+
         private void OnFailureCallback(CommonStatus commonStatus, string errorMessage)
         {
             //InvokeOnFailureCallback(commonStatus);
