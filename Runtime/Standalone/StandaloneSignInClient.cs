@@ -81,7 +81,7 @@ namespace Izhguzin.GoogleIdentity
                 return;
             }
 
-            PerformRefreshToken(operation);
+            PerformRefreshTokenAsync(operation);
         }
 
         protected override void BeginRevokeAccess(GoogleRequestAsyncOperation operation)
@@ -146,13 +146,35 @@ namespace Izhguzin.GoogleIdentity
             try
             {
                 if (CurrentUser.Token.IsEffectivelyExpired() && !string.IsNullOrEmpty(CurrentUser.Token.RefreshToken))
-                    await SendRefreshTokenRequest(operation);
+                    CurrentUser = await SendRefreshTokenRequestAsync();
 
                 await SendRevokeAccessRequestAsync();
 
                 CurrentUser = null;
                 PlayerPrefs.DeleteKey(PrefsKey);
                 InvokeOnComplete(operation, CommonStatus.Success);
+            }
+            catch (GoogleSignInException exception)
+            {
+                OnExceptionCatch(operation, exception.CommonStatus, exception);
+            }
+            catch (NullReferenceException exception)
+            {
+                OnExceptionCatch(operation, CommonStatus.DeveloperError, exception);
+            }
+        }
+
+        private async Task PerformRefreshTokenAsync(GoogleRequestAsyncOperation operation)
+        {
+            try
+            {
+                UserCredential credential = await SendRefreshTokenRequestAsync();
+                SaveCredential(credential);
+                InvokeOnSuccess(credential, operation);
+            }
+            catch (NullReferenceException exception)
+            {
+                OnExceptionCatch(operation, CommonStatus.DeveloperError, exception);
             }
             catch (GoogleSignInException exception)
             {
@@ -171,12 +193,12 @@ namespace Izhguzin.GoogleIdentity
                 RedirectUri  = redirectUri,
                 CodeVerifier = codeVerifier
             };
+            using UnityWebRequest tokenRequest = CreatePostRequest(requestUrl);
+            await tokenRequest.SendWebRequest();
+            CheckResponseForErrors(tokenRequest, "Token exchange");
 
             try
             {
-                using UnityWebRequest tokenRequest = CreatePostRequest(requestUrl);
-                await tokenRequest.SendWebRequest();
-                CheckResponseForErrors(tokenRequest);
                 return GetCredentialFromResponse(tokenRequest.downloadHandler.text);
             }
             catch (Exception exception)
@@ -192,29 +214,35 @@ namespace Izhguzin.GoogleIdentity
             TokenResponse          token      = CurrentUser.Token;
             RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
 
+            using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
+            await webRequest.SendWebRequest();
+
+            CheckResponseForErrors(webRequest, "Revoke access");
+        }
+
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="GoogleSignInException"></exception>
+        private async Task<UserCredential> SendRefreshTokenRequestAsync()
+        {
+            TokenResponse          oldToken   = CurrentUser.Token;
+            RefreshTokenRequestUrl requestUrl = new(_standaloneOptions, oldToken.RefreshToken);
+
+            using UnityWebRequest refreshRequest = CreatePostRequest(requestUrl);
+            await refreshRequest.SendWebRequest();
+            CheckResponseForErrors(refreshRequest, "Refresh token");
+
             try
             {
-                using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
-                await webRequest.SendWebRequest();
-
-                CheckResponseForErrors(webRequest);
+                UserCredential credential = GetCredentialFromResponse(refreshRequest.downloadHandler.text);
+                credential.Token.RefreshToken = oldToken.RefreshToken;
+                return credential;
             }
             catch (Exception exception)
             {
                 throw new GoogleSignInException(CommonStatus.ResponseError,
-                    $"Failed to revoke access: {exception.Message}");
+                    $"Failed to refresh token: {exception.Message}");
             }
         }
-
-        private async Task PerformRefreshToken(GoogleRequestAsyncOperation operation)
-        {
-            try
-            {
-                CurrentUser = await SendRefreshTokenRequest(operation);
-            }
-            catch (Exception exception) { }
-        }
-
 
         private bool HasCachedUser()
         {
@@ -238,34 +266,6 @@ namespace Izhguzin.GoogleIdentity
             return false;
         }
 
-        /// <exception cref="NullReferenceException"></exception>
-        private async Task<UserCredential> SendRefreshTokenRequest(GoogleRequestAsyncOperation operation)
-        {
-            //try
-            //{
-            TokenResponse          oldToken               = CurrentUser.Token;
-            RefreshTokenRequestUrl refreshTokenRequestUrl = new(_standaloneOptions, oldToken.RefreshToken);
-
-            using UnityWebRequest webRequest = CreatePostRequest(refreshTokenRequestUrl);
-            await webRequest.SendWebRequest();
-            CheckResponseForErrors(webRequest);
-
-            UserCredential credential = GetCredentialFromResponse(webRequest.downloadHandler.text);
-            credential.Token.RefreshToken = oldToken.RefreshToken;
-            return credential;
-            //}
-            //catch (NullReferenceException exception)
-            //{
-            //    OnExceptionCatch(operation, CommonStatus.DeveloperError, exception);
-            //}
-            //catch (GoogleSignInException exception)
-            //{
-            //    OnExceptionCatch(operation, exception.CommonStatus, exception);
-            //}
-
-            return null;
-        }
-
         private UnityWebRequest CreatePostRequest(RequestUrl url)
         {
             UnityWebRequest request = new(url.EndPointUrl, UnityWebRequest.kHttpVerbPOST)
@@ -281,15 +281,15 @@ namespace Izhguzin.GoogleIdentity
         }
 
         /// <exception cref="GoogleSignInException"></exception>
-        private void CheckResponseForErrors(UnityWebRequest tokenRequest)
+        private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)
         {
             if (tokenRequest.result != UnityWebRequest.Result.Success)
                 throw new GoogleSignInException(CommonStatus.ResponseError,
-                    $"Token request failed with error: {tokenRequest.error}");
+                    $"{method} request failed with error: {tokenRequest.error}");
 
             if (tokenRequest.responseCode != 200)
                 throw new GoogleSignInException(CommonStatus.ResponseError,
-                    $"Token request failed with status code {tokenRequest.responseCode} and message: {tokenRequest.downloadHandler.text}");
+                    $"{method} request failed with status code {tokenRequest.responseCode} and message: {tokenRequest.downloadHandler.text}");
         }
     }
 }
