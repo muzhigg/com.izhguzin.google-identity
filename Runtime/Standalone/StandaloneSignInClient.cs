@@ -32,6 +32,7 @@ namespace Izhguzin.GoogleIdentity
         }
 
         /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="JsonDeserializationException"></exception>
         private static UserCredential LoadCredential()
         {
             string encodedString = PlayerPrefs.GetString(PrefsKey, null);
@@ -68,7 +69,7 @@ namespace Izhguzin.GoogleIdentity
         protected override void BeginSignIn(GoogleRequestAsyncOperation operation)
         {
             if (HasCachedUser())
-                PerformOfflineSignIn(operation);
+                PerformOfflineSignInAsync(operation);
             else
                 PerformSignInAsync(operation);
         }
@@ -96,12 +97,23 @@ namespace Izhguzin.GoogleIdentity
             PerformRevokeAccessAsync(operation);
         }
 
-        private void PerformOfflineSignIn(GoogleRequestAsyncOperation operation)
+        private async Task PerformOfflineSignInAsync(GoogleRequestAsyncOperation operation)
         {
             try
             {
                 UserCredential credential = LoadCredential();
+
+                if (credential.IsExpired())
+                {
+                    credential = await SendRefreshTokenRequestAsync(credential);
+                    SaveCredential(credential);
+                }
+
                 InvokeOnSuccess(credential, operation);
+            }
+            catch (GoogleSignInException exception)
+            {
+                OnExceptionCatch(operation, exception.CommonStatus, exception);
             }
             catch (Exception exception)
             {
@@ -146,7 +158,7 @@ namespace Izhguzin.GoogleIdentity
             try
             {
                 if (CurrentUser.Token.IsEffectivelyExpired() && !string.IsNullOrEmpty(CurrentUser.Token.RefreshToken))
-                    CurrentUser = await SendRefreshTokenRequestAsync();
+                    CurrentUser = await SendRefreshTokenRequestAsync(CurrentUser);
 
                 await SendRevokeAccessRequestAsync();
 
@@ -168,7 +180,7 @@ namespace Izhguzin.GoogleIdentity
         {
             try
             {
-                UserCredential credential = await SendRefreshTokenRequestAsync();
+                UserCredential credential = await SendRefreshTokenRequestAsync(CurrentUser);
                 SaveCredential(credential);
                 InvokeOnSuccess(credential, operation);
             }
@@ -222,9 +234,9 @@ namespace Izhguzin.GoogleIdentity
 
         /// <exception cref="NullReferenceException"></exception>
         /// <exception cref="GoogleSignInException"></exception>
-        private async Task<UserCredential> SendRefreshTokenRequestAsync()
+        private async Task<UserCredential> SendRefreshTokenRequestAsync(UserCredential expiredCredential)
         {
-            TokenResponse          oldToken   = CurrentUser.Token;
+            TokenResponse          oldToken   = expiredCredential.Token;
             RefreshTokenRequestUrl requestUrl = new(_standaloneOptions, oldToken.RefreshToken);
 
             using UnityWebRequest refreshRequest = CreatePostRequest(requestUrl);
