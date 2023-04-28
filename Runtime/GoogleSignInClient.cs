@@ -88,7 +88,8 @@ namespace Izhguzin.GoogleIdentity
             {
                 if (!CanBeginOperation(asyncOp)) return;
 
-                CurrentUser = null;
+                if (CurrentUser != null) UnityMainThread.RunOnMainThread(() => InvokeOnSuccess(CurrentUser, asyncOp));
+
                 UnityMainThread.RunOnMainThread(() => BeginSignIn(asyncOp));
             });
 
