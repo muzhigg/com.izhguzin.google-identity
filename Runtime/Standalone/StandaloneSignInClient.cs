@@ -93,8 +93,7 @@ namespace Izhguzin.GoogleIdentity
                 return;
             }
 
-            PerformRevokeAccess(operation);
-            PlayerPrefs.DeleteKey(PrefsKey);
+            PerformRevokeAccessAsync(operation);
         }
 
         private void PerformOfflineSignIn(GoogleRequestAsyncOperation operation)
@@ -142,6 +141,25 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
+        private async Task PerformRevokeAccessAsync(GoogleRequestAsyncOperation operation)
+        {
+            try
+            {
+                if (CurrentUser.Token.IsEffectivelyExpired() && !string.IsNullOrEmpty(CurrentUser.Token.RefreshToken))
+                    await SendRefreshTokenRequest(operation);
+
+                await SendRevokeAccessRequestAsync();
+
+                CurrentUser = null;
+                PlayerPrefs.DeleteKey(PrefsKey);
+                InvokeOnComplete(operation, CommonStatus.Success);
+            }
+            catch (GoogleSignInException exception)
+            {
+                OnExceptionCatch(operation, exception.CommonStatus, exception);
+            }
+        }
+
         /// <exception cref="GoogleSignInException"></exception>
         /// <exception cref="NullReferenceException"></exception>
         private async Task<UserCredential> SendCodeExchangeRequestAsync(string code, string codeVerifier,
@@ -168,6 +186,25 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
+        /// <exception cref="GoogleSignInException"></exception>
+        private async Task SendRevokeAccessRequestAsync()
+        {
+            TokenResponse          token      = CurrentUser.Token;
+            RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
+
+            try
+            {
+                using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
+                await webRequest.SendWebRequest();
+
+                CheckResponseForErrors(webRequest);
+            }
+            catch (Exception exception)
+            {
+                throw new GoogleSignInException(CommonStatus.ResponseError,
+                    $"Failed to revoke access: {exception.Message}");
+            }
+        }
 
         private async Task PerformRefreshToken(GoogleRequestAsyncOperation operation)
         {
@@ -178,45 +215,6 @@ namespace Izhguzin.GoogleIdentity
             catch (Exception exception) { }
         }
 
-        private async Task PerformRevokeAccess(GoogleRequestAsyncOperation operation)
-        {
-            try
-            {
-                if (CurrentUser.Token.IsEffectivelyExpired() && !string.IsNullOrEmpty(CurrentUser.Token.RefreshToken))
-                    await SendRefreshTokenRequest(operation);
-
-                await SendRevokeAccessRequest();
-                CurrentUser = null;
-                InvokeOnComplete(operation, CommonStatus.Success);
-            }
-            catch (GoogleSignInException exception)
-            {
-                OnExceptionCatch(operation, exception.CommonStatus, exception);
-            }
-        }
-
-        private async Task SendRevokeAccessRequest()
-        {
-            try
-            {
-                TokenResponse          token      = CurrentUser.Token;
-                RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
-
-                Debug.Log(token.IsExpired());
-                Debug.Log(token.IsEffectivelyExpired());
-
-                using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
-                await webRequest.SendWebRequest();
-
-                Debug.Log(webRequest.downloadHandler.text);
-                CheckResponseForErrors(webRequest);
-            }
-            catch (Exception exception)
-            {
-                throw new GoogleSignInException(CommonStatus.ResponseError,
-                    $"Failed to revoke access: {exception.Message}");
-            }
-        }
 
         private bool HasCachedUser()
         {
