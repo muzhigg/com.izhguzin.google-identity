@@ -21,6 +21,8 @@ namespace Izhguzin.GoogleIdentity
         {
 #if UNITY_STANDALONE
             return new StandaloneSignInClient(options);
+#elif UNITY_ANDROID
+            return new AndroidSignInClient(options);
 #else
             throw new NotSupportedException(
                 $"This platform ({Application.platform}) is not supported by the GoogleSignInClient");

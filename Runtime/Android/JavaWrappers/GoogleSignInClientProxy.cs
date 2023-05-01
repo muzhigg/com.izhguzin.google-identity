@@ -70,6 +70,11 @@ namespace Izhguzin.GoogleIdentity.Android
 
         public GoogleSignInClientProxy(AndroidJavaObject javaObject) : base(javaObject) { }
 
+        public void ConfigureClient(string clientId, bool singleUse)
+        {
+            androidJavaObject.Call("configureClient", clientId, singleUse);
+        }
+
         public void SetListeners(OnSuccessListener onSuccessListener, OnFailureListener onFailureListener)
         {
             androidJavaObject.Call("setListeners", onSuccessListener, onFailureListener);

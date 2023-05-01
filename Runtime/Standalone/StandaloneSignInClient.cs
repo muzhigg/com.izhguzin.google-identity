@@ -140,6 +140,7 @@ namespace Izhguzin.GoogleIdentity
 
                 UserCredential credential = await SendCodeExchangeRequestAsync(code,
                     requestUrl.ProofCodeKey.codeVerifier, requestUrl.RedirectUri);
+
                 SaveCredential(credential);
                 InvokeOnSuccess(credential, operation);
             }
