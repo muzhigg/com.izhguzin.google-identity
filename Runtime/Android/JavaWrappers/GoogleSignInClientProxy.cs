@@ -1,93 +1,64 @@
-﻿using Izhguzin.GoogleIdentity.Utils;
+﻿using System;
 using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Android
 {
     internal class GoogleSignInClientProxy : AndroidJavaObjectWrapper
     {
-        public class OnFailureListener : AndroidJavaProxy
+        public class OnTaskCompleteListener : AndroidJavaProxy
         {
             #region Fileds and Properties
 
-            private readonly OnFailureCallback _callback;
+            public string Value { get; private set; }
+
+            public CommonStatus StatusCode { get; private set; }
+
+            public string Error { get; private set; }
+
+            private readonly Action<OnTaskCompleteListener> _callback;
 
             #endregion
 
-            public OnFailureListener(OnFailureCallback callback) : base(
-                "com.izhguzin.gsi.GoogleSignInClientProxy$OnFailureListener")
+            public OnTaskCompleteListener(Action<OnTaskCompleteListener> callback) : base(
+                "com.izhguzin.gsi.GoogleSignInClientProxy$OnTaskCompleteListener")
             {
                 _callback = callback;
             }
 
-            // ReSharper disable once InconsistentNaming
-            private void onFailure(int errorCode, string message)
+            private void onComplete(string value, int statusCode, string errorMessage)
             {
-                //CommonStatus errorType = !Enum.IsDefined(typeof(CommonStatus), errorCode)
-                //    ? CommonStatus.Other
-                //    : (CommonStatus)errorCode;
+                CommonStatus status = Enum.IsDefined(typeof(CommonStatus), statusCode)
+                    ? (CommonStatus)statusCode
+                    : CommonStatus.Error;
 
-                //_callback?.Invoke(errorType, message);
+                Value      = value;
+                StatusCode = status;
+                Error      = errorMessage;
+
+                _callback(this);
             }
         }
 
-        public class OnSuccessListener : AndroidJavaProxy
-        {
-            #region Fileds and Properties
-
-            private readonly OnSuccessCallback _callback;
-
-            #endregion
-
-            public OnSuccessListener(OnSuccessCallback callback) : base(
-                "com.izhguzin.gsi.GoogleSignInClientProxy$OnSuccessListener")
-            {
-                _callback = callback;
-            }
-
-            // ReSharper disable once InconsistentNaming
-            private void onSuccess(AndroidJavaObject credential)
-            {
-                UnityMainThread.RunOnMainThread(() =>
-                {
-                    Debug.Log($"Main Thread? {UnityMainThread.IsRunningOnMainThread()}");
-
-                    SignInCredential cred = (SignInCredential)credential;
-                    Debug.Log(cred.GetGoogleIdToken());
-                    UserCredential userCredential = new()
-                    {
-                        Token =
-                        {
-                            IdToken = cred.GetGoogleIdToken()
-                        }
-                    };
-                    Debug.Log(1);
-                    _callback?.Invoke(userCredential);
-                });
-
-                //
-            }
-        }
-
-        public GoogleSignInClientProxy(AndroidJavaObject javaObject) : base(javaObject) { }
+        internal GoogleSignInClientProxy(AndroidJavaObject javaObject) : base(javaObject) { }
 
         public void ConfigureClient(string clientId, bool singleUse)
         {
             androidJavaObject.Call("configureClient", clientId, singleUse);
         }
 
-        public void SetListeners(OnSuccessListener onSuccessListener, OnFailureListener onFailureListener)
+        public void SignIn(OnTaskCompleteListener listener)
         {
-            androidJavaObject.Call("setListeners", onSuccessListener, onFailureListener);
+            androidJavaObject.Call("signIn", listener);
         }
 
-        public void BuildRequest(string clientId, bool filterByAuthorizedAccounts, bool autoSelectEnabled)
+        public void SignOut(OnTaskCompleteListener listener)
         {
-            androidJavaObject.Call("buildRequest", clientId, filterByAuthorizedAccounts, autoSelectEnabled);
+            androidJavaObject.Call("signOut", listener);
         }
 
-        public void BeginSignIn()
+        public void RevokeAccess(OnTaskCompleteListener listener)
         {
-            androidJavaObject.Call("beginSignIn");
+            androidJavaObject.Call("revokeAccess", listener);
         }
     }
 }

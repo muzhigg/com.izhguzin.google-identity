@@ -90,7 +90,11 @@ namespace Izhguzin.GoogleIdentity
             {
                 if (!CanBeginOperation(asyncOp)) return;
 
-                if (CurrentUser != null) UnityMainThread.RunOnMainThread(() => InvokeOnSuccess(CurrentUser, asyncOp));
+                if (CurrentUser != null)
+                {
+                    UnityMainThread.RunOnMainThread(() => InvokeOnSuccess(CurrentUser, asyncOp, true));
+                    return;
+                }
 
                 UnityMainThread.RunOnMainThread(() => BeginSignIn(asyncOp));
             });
@@ -136,6 +140,12 @@ namespace Izhguzin.GoogleIdentity
         {
             CurrentUser = credential;
             InvokeOnComplete(asyncOp, CommonStatus.Success);
+        }
+
+        protected void InvokeOnSuccess(UserCredential credential, GoogleRequestAsyncOperation asyncOp, bool fromCache)
+        {
+            CurrentUser = credential;
+            InvokeOnComplete(asyncOp, fromCache ? CommonStatus.SuccessCache : CommonStatus.Success);
         }
 
         protected void InvokeOnComplete(GoogleRequestAsyncOperation asyncOp, CommonStatus code)

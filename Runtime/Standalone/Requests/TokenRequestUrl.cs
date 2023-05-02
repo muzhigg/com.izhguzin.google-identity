@@ -9,18 +9,19 @@ namespace Izhguzin.GoogleIdentity
 
         [RequestParameter("code", true)] public string Code { get; set; }
 
-        [RequestParameter("redirect_uri", true)]
+        [RequestParameter("redirect_uri", false)]
         public string RedirectUri { get; set; }
 
         [RequestParameter("client_id", true)] public string ClientId { get; set; }
 
-        [RequestParameter("code_verifier", true)]
+        [RequestParameter("code_verifier", false)]
         public string CodeVerifier { get; set; }
 
         [RequestParameter("client_secret", true)]
         public string ClientSecret { get; set; }
 
-        [RequestParameter("grant_type", true)] public string GrantType { get; set; } = "authorization_code";
+        [RequestParameter("grant_type", false)]
+        public string GrantType { get; set; } = "authorization_code";
 
         public override string EndPointUrl => GoogleAuthConstants.TokenUrl;
 
@@ -35,6 +36,14 @@ namespace Izhguzin.GoogleIdentity
             ClientSecret =
                 options.ClientSecret.ThrowIfNullOrEmpty(
                     new NullReferenceException($"Client secret not set in {typeof(SignInOptions)}."));
+        }
+
+        public TokenRequestUrl(AndroidSignInOptions options)
+        {
+            ClientId = options.WebClientId.ThrowIfNullOrEmpty(
+                new NullReferenceException($"Client ID not set in {typeof(SignInOptions)}."));
+            ClientSecret = options.WebClientSecret.ThrowIfNullOrEmpty(
+                new NullReferenceException($"Client secret not set in {typeof(SignInOptions)}."));
         }
     }
 }

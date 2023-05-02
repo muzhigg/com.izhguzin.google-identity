@@ -49,11 +49,32 @@ namespace Izhguzin.GoogleIdentity
                 _options.WebClientId = webClientId;
                 return this;
             }
+
+            public Builder SetWebClientSecret(string clientSecret)
+            {
+                _options.WebClientSecret =
+                    clientSecret.ThrowIfNullOrEmpty(new ArgumentException("Client Secret cannot be null or empty"));
+                return this;
+            }
+
+            /// <summary>
+            ///     Sets the type of token to receive from the Google service. If set to true, the received JWToken cannot be
+            ///     refreshed.
+            /// </summary>
+            public Builder SetUseOneTimeToken(bool useOneTimeToken)
+            {
+                _options.UseOneTimeToken = useOneTimeToken;
+                return this;
+            }
         }
 
         #region Fileds and Properties
 
         public string WebClientId { get; private set; }
+
+        public string WebClientSecret { get; private set; }
+
+        public bool UseOneTimeToken { get; private set; }
 
         #endregion
 

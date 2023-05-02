@@ -44,6 +44,7 @@ namespace Izhguzin.GoogleIdentity
             return GetCredentialFromResponse(decodedToken);
         }
 
+        // TODO : Move to base class
         /// <exception cref="JsonDeserializationException"></exception>
         private static UserCredential GetCredentialFromResponse(string tokenResponseJson)
         {
@@ -279,6 +280,7 @@ namespace Izhguzin.GoogleIdentity
             return false;
         }
 
+        // TODO : Move to base class
         private UnityWebRequest CreatePostRequest(RequestUrl url)
         {
             UnityWebRequest request = new(url.EndPointUrl, UnityWebRequest.kHttpVerbPOST)
@@ -293,6 +295,7 @@ namespace Izhguzin.GoogleIdentity
             return request;
         }
 
+        // TODO : Move to base class
         /// <exception cref="GoogleSignInException"></exception>
         private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)
         {
