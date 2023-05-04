@@ -43,7 +43,8 @@ namespace Izhguzin.GoogleIdentity.Standalone
         #region Fileds and Properties
 
         [RequestParameter("response_type", true)]
-        public string ResponseType { get; set; }
+        // https://developers.google.com/identity/openid-connect/openid-connect#prompt
+        public string ResponseType { get; set; } // set "code" to AuthCodeFlow, set "token id_token" to jwt
 
         [RequestParameter("client_id", true)] public string ClientId { get; set; }
 
@@ -63,7 +64,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
         [RequestParameter("prompt", false)] public string Prompt { get; set; }
 
         [RequestParameter("access_type", false)]
-        public string AccessType { get; set; }
+        public string AccessType { get; set; } // set offline to receive refresh token
 
         public ProofKey ProofCodeKey { get; set; }
 
@@ -78,7 +79,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
             optionsStandalone ??= new StandaloneSignInOptions();
 
             ClientId = optionsStandalone.ClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException($"Client ID not set in {typeof(SignInOptions)}."));
+                new NullReferenceException($"Client ID not set in {typeof(GoogleAuthOptions)}."));
             RedirectUri         = $"http://{IPAddress.Loopback}:{GetAvailablePort(optionsStandalone)}/";
             ProofCodeKey        = new ProofKey(optionsStandalone.UseS256GenerationMethod);
             CodeChallenge       = ProofCodeKey.codeChallenge;

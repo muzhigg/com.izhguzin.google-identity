@@ -3,7 +3,7 @@
 namespace Izhguzin.GoogleIdentity
 {
     /// <summary>
-    ///     Asynchronous operation object requests received from GoogleSignInClient.
+    ///     Asynchronous operation object requests received from GoogleIdentityService.
     ///     <para>
     ///         You can yield until it continues,
     ///         or await until it's complete,
@@ -37,7 +37,7 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     The client who created this operation.
         /// </summary>
-        public GoogleSignInClient SignInClient { get; }
+        public GoogleIdentityService SignInClient { get; }
 
         /// <summary>
         ///     Has the operation finished? (Read Only)
@@ -65,7 +65,7 @@ namespace Izhguzin.GoogleIdentity
 
         #endregion
 
-        internal GoogleRequestAsyncOperation(GoogleSignInClient client)
+        internal GoogleRequestAsyncOperation(GoogleIdentityService client)
         {
             SignInClient = client;
         }

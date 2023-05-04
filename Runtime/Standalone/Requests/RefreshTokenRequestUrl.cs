@@ -24,10 +24,10 @@ namespace Izhguzin.GoogleIdentity.Standalone
         public RefreshTokenRequestUrl(StandaloneSignInOptions options, string refreshToken)
         {
             ClientId = options.ClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException("Client Id is not set in SignInOptions"));
+                new NullReferenceException("Client Id is not set in GoogleAuthOptions"));
             ClientSecret =
                 options.ClientSecret.ThrowIfNullOrEmpty(
-                    new NullReferenceException("Client secret is not set it SignInOptions"));
+                    new NullReferenceException("Client secret is not set it GoogleAuthOptions"));
             RefreshToken = refreshToken;
         }
     }

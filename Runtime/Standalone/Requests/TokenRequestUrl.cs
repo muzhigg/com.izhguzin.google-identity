@@ -31,19 +31,11 @@ namespace Izhguzin.GoogleIdentity
         public TokenRequestUrl(StandaloneSignInOptions options)
         {
             ClientId = options.ClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException($"Client ID not set in {typeof(SignInOptions)}."));
+                new NullReferenceException($"Client ID not set in {typeof(GoogleAuthOptions)}."));
 
             ClientSecret =
                 options.ClientSecret.ThrowIfNullOrEmpty(
-                    new NullReferenceException($"Client secret not set in {typeof(SignInOptions)}."));
-        }
-
-        public TokenRequestUrl(AndroidSignInOptions options)
-        {
-            ClientId = options.WebClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException($"Client ID not set in {typeof(SignInOptions)}."));
-            ClientSecret = options.WebClientSecret.ThrowIfNullOrEmpty(
-                new NullReferenceException($"Client secret not set in {typeof(SignInOptions)}."));
+                    new NullReferenceException($"Client secret not set in {typeof(GoogleAuthOptions)}."));
         }
     }
 }
