@@ -41,6 +41,11 @@ namespace Izhguzin.GoogleIdentity.Android
 
         internal GoogleSignInClientProxy(AndroidJavaObject javaObject) : base(javaObject) { }
 
+        public void InitOptions(GoogleSignInOptions options)
+        {
+            androidJavaObject.Call("initOptions", options.GetAndroidJavaObject());
+        }
+
         public void ConfigureClient(string clientId, bool singleUse)
         {
             androidJavaObject.Call("configureClient", clientId, singleUse);

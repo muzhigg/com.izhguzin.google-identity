@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Izhguzin.GoogleIdentity.Standalone
+﻿namespace Izhguzin.GoogleIdentity.Standalone
 {
     internal class RefreshTokenRequestUrl : RequestUrl
     {
@@ -20,15 +18,15 @@ namespace Izhguzin.GoogleIdentity.Standalone
 
         #endregion
 
-        /// <exception cref="NullReferenceException"></exception>
-        public RefreshTokenRequestUrl(StandaloneSignInOptions options, string refreshToken)
-        {
-            ClientId = options.ClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException("Client Id is not set in GoogleAuthOptions"));
-            ClientSecret =
-                options.ClientSecret.ThrowIfNullOrEmpty(
-                    new NullReferenceException("Client secret is not set it GoogleAuthOptions"));
-            RefreshToken = refreshToken;
-        }
+        ///// <exception cref="NullReferenceException"></exception>
+        //public RefreshTokenRequestUrl(StandaloneSignInOptions options, string refreshToken)
+        //{
+        //    ClientId = options.ClientId.ThrowIfNullOrEmpty(
+        //        new NullReferenceException("Client Id is not set in GoogleAuthOptions"));
+        //    ClientSecret =
+        //        options.ClientSecret.ThrowIfNullOrEmpty(
+        //            new NullReferenceException("Client secret is not set it GoogleAuthOptions"));
+        //    RefreshToken = refreshToken;
+        //}
     }
 }

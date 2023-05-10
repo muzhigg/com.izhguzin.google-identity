@@ -1,16 +1,17 @@
 using System;
+using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Utils;
 using Unity.VisualScripting.FullSerializer;
 
 namespace Izhguzin.GoogleIdentity
 {
     [Serializable, fsObject]
-    internal sealed class TokenResponse
+    public sealed class TokenResponse
     {
         internal const int TokenRefreshTimeWindowSeconds    = 60 * 6;
         internal const int TokenHardExpiryTimeWindowSeconds = 60 * 5;
 
-        public TokenResponse()
+        internal TokenResponse()
         {
             IssuedUtc = DateTime.UtcNow;
         }
@@ -64,6 +65,18 @@ namespace Izhguzin.GoogleIdentity
         public bool IsEffectivelyExpired()
         {
             return IssuedUtc.AddSeconds(ExpiresInSeconds - TokenHardExpiryTimeWindowSeconds) <= DateTime.UtcNow;
+        }
+
+        public async Task<bool> RefreshTokenAsync()
+        {
+            return await ((BaseIdentityService)GoogleIdentityService.Instance)
+                .RefreshTokenAsync(this);
+        }
+
+        public async Task<bool> RevokeAccessAsync()
+        {
+            return await ((BaseIdentityService)GoogleIdentityService.Instance)
+                .RevokeAccessAsync(this);
         }
 
         /// <exception cref="JsonDeserializationException"></exception>

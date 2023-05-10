@@ -1,4 +1,7 @@
-﻿namespace Izhguzin.GoogleIdentity.Standalone
+﻿using System.Text;
+using UnityEngine.Networking;
+
+namespace Izhguzin.GoogleIdentity.Standalone
 {
     internal abstract class RequestUrl : IRequestUrl
     {
@@ -24,6 +27,20 @@
             });
 
             return queryParams;
+        }
+
+        public UnityWebRequest CreatePostRequest()
+        {
+            UnityWebRequest request = new(EndPointUrl, UnityWebRequest.kHttpVerbPOST)
+            {
+                uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(BuildBody()))
+                {
+                    contentType = "application/x-www-form-urlencoded"
+                },
+                downloadHandler = new DownloadHandlerBuffer()
+            };
+
+            return request;
         }
     }
 }

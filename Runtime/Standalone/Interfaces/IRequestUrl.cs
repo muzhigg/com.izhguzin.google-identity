@@ -1,4 +1,6 @@
-﻿namespace Izhguzin.GoogleIdentity.Standalone
+﻿using UnityEngine.Networking;
+
+namespace Izhguzin.GoogleIdentity.Standalone
 {
     internal interface IRequestUrl
     {
@@ -8,7 +10,8 @@
 
         #endregion
 
-        public string BuildUrl();
-        public string BuildBody();
+        public string          BuildUrl();
+        public string          BuildBody();
+        public UnityWebRequest CreatePostRequest();
     }
 }

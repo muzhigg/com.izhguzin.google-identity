@@ -7,8 +7,25 @@ using System.Net.Sockets;
 
 namespace Izhguzin.GoogleIdentity.Standalone
 {
+    // https://developers.google.com/identity/openid-connect/openid-connect#prompt
     internal class AuthorizationRequestUrl : RequestUrl
     {
+        /// <exception cref="NullReferenceException"></exception>
+        public static AuthorizationRequestUrl CreateDefaultWithOptions(GoogleAuthOptions options)
+        {
+            AuthorizationRequestUrl requestUrl = new()
+            {
+                ClientId = options.ClientId.ThrowIfNull(
+                    new NullReferenceException(
+                        $"Client ID not set in {typeof(GoogleAuthOptions)}.")),
+                RedirectUri = $"http://{IPAddress.Loopback}:{GetAvailablePort(options)}/",
+                Scope       = string.Join(' ', options.Scopes),
+                State       = PKCECodeProvider.GetRandomBase64URL(32)
+            };
+
+            return requestUrl;
+        }
+
         private static int GetRandomUnusedPort()
         {
             try
@@ -23,6 +40,22 @@ namespace Izhguzin.GoogleIdentity.Standalone
             {
                 throw new Exception("Failed to get a random unused port.");
             }
+        }
+
+        private static int GetAvailablePort(GoogleAuthOptions options)
+        {
+            return GetUnusedPortFromArray(options.Ports);
+        }
+
+        private static int GetUnusedPortFromArray(ICollection<int> readOnlyCollection)
+        {
+            if (readOnlyCollection.Count == 0) return GetRandomUnusedPort();
+
+            if (IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners()
+                .All(endPoint => !readOnlyCollection.Contains(endPoint.Port)))
+                return readOnlyCollection.First();
+
+            throw new NotSupportedException("All specified TCP ports are already busy.");
         }
 
         internal readonly struct ProofKey
@@ -42,11 +75,24 @@ namespace Izhguzin.GoogleIdentity.Standalone
 
         #region Fileds and Properties
 
+        /// <summary>
+        ///     If the value is code, launches a Basic authorization code flow,
+        ///     requiring a POST to the token endpoint to obtain the tokens.
+        ///     If the value is token id_token or id_token token, launches an Implicit flow,
+        ///     requiring the use of JavaScript at the redirect URI to retrieve tokens
+        ///     from the URI #fragment identifier.
+        /// </summary>
         [RequestParameter("response_type", true)]
-        // https://developers.google.com/identity/openid-connect/openid-connect#prompt
         public string ResponseType { get; set; } // set "code" to AuthCodeFlow, set "token id_token" to jwt
 
-        [RequestParameter("client_id", true)] public string ClientId { get; set; }
+        [RequestParameter("nonce", false)] public string Nonce { get; set; }
+
+        /// <summary>
+        ///     The client ID string that you obtain from the API Console Credentials page,
+        ///     as described in Obtain OAuth 2.0 credentials.
+        /// </summary>
+        [RequestParameter("client_id", true)]
+        public string ClientId { get; set; }
 
         [RequestParameter("redirect_uri", true)]
         public string RedirectUri { get; set; }
@@ -54,10 +100,10 @@ namespace Izhguzin.GoogleIdentity.Standalone
         [RequestParameter("scope", true)] public string Scope { get; set; }
 
         [RequestParameter("code_challenge", false)]
-        public string CodeChallenge { get; set; }
+        public string CodeChallenge => ProofCodeKey.codeChallenge;
 
         [RequestParameter("code_challenge_method", false)]
-        public string CodeChallengeMethod { get; set; }
+        public string CodeChallengeMethod => CodeChallenge == null ? null : ProofCodeKey.codeChallengeMethod;
 
         [RequestParameter("state", false)] public string State { get; set; }
 
@@ -66,49 +112,12 @@ namespace Izhguzin.GoogleIdentity.Standalone
         [RequestParameter("access_type", false)]
         public string AccessType { get; set; } // set offline to receive refresh token
 
+        [RequestParameter("display", false)] public string Display { get; set; }
+
         public ProofKey ProofCodeKey { get; set; }
 
         public override string EndPointUrl => GoogleAuthConstants.AuthorizationUrl;
 
         #endregion
-
-        /// <exception cref="NullReferenceException"></exception>
-        /// <exception cref="GoogleSignInException"></exception>
-        public AuthorizationRequestUrl(StandaloneSignInOptions optionsStandalone)
-        {
-            optionsStandalone ??= new StandaloneSignInOptions();
-
-            ClientId = optionsStandalone.ClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException($"Client ID not set in {typeof(GoogleAuthOptions)}."));
-            RedirectUri         = $"http://{IPAddress.Loopback}:{GetAvailablePort(optionsStandalone)}/";
-            ProofCodeKey        = new ProofKey(optionsStandalone.UseS256GenerationMethod);
-            CodeChallenge       = ProofCodeKey.codeChallenge;
-            CodeChallengeMethod = ProofCodeKey.codeChallengeMethod;
-            State               = PKCECodeProvider.GetRandomBase64URL(32);
-        }
-
-        private int GetAvailablePort(StandaloneSignInOptions optionsStandalone)
-        {
-            return GetUnusedPortFromArray(optionsStandalone.Ports);
-        }
-
-        private int GetUnusedPortFromArray(ICollection<int> readOnlyCollection)
-        {
-            try
-            {
-                if (readOnlyCollection.Count == 0) return GetRandomUnusedPort();
-
-                if (IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners()
-                    .All(endPoint => !readOnlyCollection.Contains(endPoint.Port)))
-                    return readOnlyCollection.First();
-
-                throw new NotSupportedException("All specified TCP ports are already busy.");
-            }
-            catch (Exception e)
-            {
-                throw new GoogleSignInException(CommonStatus.NetworkError,
-                    $"Error occurred in Sign In Client: {e.Message}");
-            }
-        }
     }
 }

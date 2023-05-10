@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Izhguzin.GoogleIdentity.Android;
 using Izhguzin.GoogleIdentity.Flows;
-using Izhguzin.GoogleIdentity.Standalone;
 
 namespace Izhguzin.GoogleIdentity
 {
-    internal class StandaloneIdentityService : BaseIdentityService
+    internal class AndroidIdentityService : BaseIdentityService
     {
         public override event Action                        OnSignIn;
         public override event Action<GoogleSignInException> OnRequestError;
@@ -13,23 +13,20 @@ namespace Izhguzin.GoogleIdentity
 
         #region Fileds and Properties
 
-        private          AuthorizationRequestUrl _authorizationRequestUrl;
-        private readonly bool                    _inProgress = false;
+        private GoogleSignInClientProxy _clientProxy;
 
         #endregion
 
-        public StandaloneIdentityService(GoogleAuthOptions options) : base(options) { }
+        public AndroidIdentityService(GoogleAuthOptions options) : base(options) { }
 
         public override bool InProgress()
         {
-            return _inProgress;
+            throw new NotImplementedException();
         }
 
-        public override async Task SignIn()
+        public override Task SignIn()
         {
-            //HttpCodeListener listener = new(_authorizationRequestUrl.RedirectUri,
-            //    Options.ResponseHtml);
-            await Flow.Authorize();
+            throw new NotImplementedException();
         }
 
         public override Task SignIn(string userId)
@@ -44,12 +41,17 @@ namespace Izhguzin.GoogleIdentity
 
         internal override Task InitializeAsync()
         {
-            Flow = Options.UseAuthorizationCodeFlow
-                ? new StandaloneAuthorizationCodeFlow(Options)
-                : new StandaloneImplicitFlow(Options);
+            _clientProxy = GsiAppCompatActivity.ClientProxy;
 
-            _authorizationRequestUrl =
-                ((IStandaloneAuthorizationModel)Flow).GetAuthorizationRequestUrl();
+            if (_clientProxy == null)
+                throw new NullReferenceException(
+                    "The current Android Activity must be GsiAppCompatActivity " +
+                    "or inherited from it.");
+
+            Flow = Options.UseAuthorizationCodeFlow
+                ? new AndroidAuthorizationCodeFlow(Options)
+                : throw new NotSupportedException(
+                    "Implicit Flow is not supported by Google on Android devices.");
 
             return Task.CompletedTask;
         }

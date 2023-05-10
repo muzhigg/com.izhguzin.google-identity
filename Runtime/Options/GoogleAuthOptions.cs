@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
@@ -54,6 +55,14 @@ namespace Izhguzin.GoogleIdentity
                 return this;
             }
 
+            /// <summary>
+            /// </summary>
+            /// <param name="clientId">
+            ///     The client ID string that you obtain from
+            ///     the API Console Credentials page, as described in
+            ///     Obtain OAuth 2.0 credentials.
+            /// </param>
+            /// <returns></returns>
             public Builder SetCredentials(string clientId)
             {
                 _options.ClientId = clientId.ThrowIfNullOrEmpty(
@@ -63,6 +72,15 @@ namespace Izhguzin.GoogleIdentity
                 return this;
             }
 
+            /// <summary>
+            /// </summary>
+            /// <param name="clientId">
+            ///     The client ID string that you obtain from
+            ///     the API Console Credentials page, as described in
+            ///     Obtain OAuth 2.0 credentials.
+            /// </param>
+            /// <param name="clientSecret"></param>
+            /// <returns></returns>
             public Builder SetCredentials(string clientId, string clientSecret)
             {
                 _options.ClientSecret = clientSecret.ThrowIfNullOrEmpty(
@@ -87,7 +105,7 @@ namespace Izhguzin.GoogleIdentity
                 Dictionary<string, fsData> installedDic = dic["installed"]
                     .AsDictionary ?? throw new NullReferenceException(
                     "The credentials you provided do not contain the Client Id " +
-                    "and Client Secret");
+                    "and Client Secret for web or installed app type.");
 
                 _options.ClientId = installedDic["client_id"].AsString.ThrowIfNull(
                     new NullReferenceException(
@@ -114,9 +132,22 @@ namespace Izhguzin.GoogleIdentity
 
             public Builder SetScopes(params string[] scopes)
             {
-                _options._scopes.AddRange(scopes);
+                foreach (string scope in scopes.Where(scope => !_options._scopes.Contains(scope)))
+                {
+                    if (NeedOpenIdScope(scope)
+                        && !_options._scopes.Contains(GoogleIdentity.Scopes.OpenId))
+                        _options._scopes.Insert(0, GoogleIdentity.Scopes.OpenId);
+
+                    _options._scopes.Add(scope);
+                }
 
                 return this;
+
+                bool NeedOpenIdScope(string scope)
+                {
+                    return scope is GoogleIdentity.Scopes.Email
+                        or GoogleIdentity.Scopes.Profile;
+                }
             }
         }
 

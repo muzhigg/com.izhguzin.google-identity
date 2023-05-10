@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
@@ -9,7 +10,7 @@ namespace Izhguzin.GoogleIdentity
     /// </summary>
     public sealed class GoogleIdentityService
     {
-        public static Task InitializeAsync(GoogleAuthOptions options)
+        public static async Task InitializeAsync(GoogleAuthOptions options)
         {
             if (UnityMainThread.IsRunningOnMainThread() == false)
                 throw new InitializationException(
@@ -19,15 +20,31 @@ namespace Izhguzin.GoogleIdentity
                 throw new InitializationException(
                     "You are attempting to initialize Google Identity Service in Edit Mode. Google Identity Service can only be initialized in Play Mode");
 
-            _instance = CreateInstance(options);
+            IIdentityService instance = CreateInstance(options);
+            try
+            {
+                await ((BaseIdentityService)instance).InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InitializationException(
+                    $"An error occurred during initialization: {ex.Message}");
+            }
 
-            return Task.CompletedTask;
+            _instance = instance;
         }
 
         private static IIdentityService CreateInstance(GoogleAuthOptions options)
         {
+#if UNITY_STANDALONE
+            return new StandaloneIdentityService(options);
+#elif UNITY_ANDROID
+            return new AndroidIdentityService(options);
+#else
             throw new InitializationException(
-                $"This platform ({Application.platform}) is not supported by the GoogleIdentityService");
+                $"This platform ({Application.platform}) is not supported by "+
+                $"the GoogleIdentityService");
+#endif
         }
 
         //private static string GenerateMessage(CommonStatus commonStatus)

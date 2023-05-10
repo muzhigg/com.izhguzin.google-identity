@@ -7,9 +7,16 @@ namespace Izhguzin.GoogleIdentity
     {
         #region Fileds and Properties
 
-        protected IAuthorizationFlow Flow { get; set; }
+        protected IAuthorizationModel Flow { get; set; }
+
+        protected GoogleAuthOptions Options { get; }
 
         #endregion
+
+        protected BaseIdentityService(GoogleAuthOptions options)
+        {
+            Options = options;
+        }
 
         public abstract event Action                        OnSignIn;
         public abstract event Action<GoogleSignInException> OnRequestError;
@@ -21,10 +28,11 @@ namespace Izhguzin.GoogleIdentity
 
         public abstract Task SignIn(string userId);
 
-        public abstract void SignOut();
+        public abstract   void SignOut();
+        internal abstract Task InitializeAsync();
 
-        internal abstract Task<bool> RefreshToken(UserCredential credential);
+        internal abstract Task<bool> RefreshTokenAsync(TokenResponse token);
 
-        internal abstract Task<bool> RevokeAccess(UserCredential credential);
+        internal abstract Task<bool> RevokeAccessAsync(TokenResponse token);
     }
 }
