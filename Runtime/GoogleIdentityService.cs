@@ -40,10 +40,12 @@ namespace Izhguzin.GoogleIdentity
             return new StandaloneIdentityService(options);
 #elif UNITY_ANDROID
             return new AndroidIdentityService(options);
+#elif UNITY_WEBGL
+            return new WebGLIdentityService(options);
 #else
             throw new InitializationException(
-                $"This platform ({Application.platform}) is not supported by "+
-                $"the GoogleIdentityService");
+                $"This platform ({Application.platform}) is not supported by " +
+                "the GoogleIdentityService");
 #endif
         }
 
