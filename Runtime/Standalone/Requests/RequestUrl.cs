@@ -7,7 +7,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
     {
         public abstract string EndPointUrl { get; }
 
-        /// <exception cref="GoogleSignInException"></exception>
+        /// <exception cref="RequestFailedException"></exception>
         public string BuildUrl()
         {
             string result = $"{EndPointUrl}?{BuildBody()}";
@@ -15,7 +15,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
             return result;
         }
 
-        /// <exception cref="GoogleSignInException"></exception>
+        /// <exception cref="RequestFailedException"></exception>
         public string BuildBody()
         {
             string queryParams = string.Empty;

@@ -39,13 +39,13 @@
 
 //        protected override void BeginSignIn(GoogleRequestAsyncOperation operation)
 //        {
-//            _clientProxy.SignIn(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
+//            _clientProxy.Authorize(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
 //            {
 //                if (listener.StatusCode is CommonStatus.Success or CommonStatus.SuccessCache)
 //                    PerformSignIn(operation, listener);
 //                else
 //                    OnExceptionCatch(operation, listener.StatusCode,
-//                        new GoogleSignInException(listener.StatusCode, $"Failed to Sign In: {listener.Error}"));
+//                        new RequestFailedException(listener.StatusCode, $"Failed to Sign In: {listener.Error}"));
 //            }));
 //        }
 

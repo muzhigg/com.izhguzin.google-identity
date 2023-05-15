@@ -7,10 +7,6 @@ namespace Izhguzin.GoogleIdentity
 {
     internal class AndroidIdentityService : BaseIdentityService
     {
-        public override event Action                        OnSignIn;
-        public override event Action<GoogleSignInException> OnRequestError;
-        public override event Action                        OnSignOut;
-
         #region Fileds and Properties
 
         private GoogleSignInClientProxy _clientProxy;
@@ -19,22 +15,7 @@ namespace Izhguzin.GoogleIdentity
 
         public AndroidIdentityService(GoogleAuthOptions options) : base(options) { }
 
-        public override bool InProgress()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task SignIn()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task SignIn(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SignOut()
+        public override Task<TokenResponse> Authorize()
         {
             throw new NotImplementedException();
         }

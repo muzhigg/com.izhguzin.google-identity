@@ -8,7 +8,7 @@ namespace Izhguzin.GoogleIdentity
     internal class WebGLIdentityService : BaseIdentityService
     {
         public override event Action                        OnSignIn;
-        public override event Action<GoogleSignInException> OnRequestError;
+        public override event Action<RequestFailedException> OnRequestError;
         public override event Action                        OnSignOut;
 
         public WebGLIdentityService(GoogleAuthOptions options) : base(options) { }
@@ -18,12 +18,12 @@ namespace Izhguzin.GoogleIdentity
             throw new NotImplementedException();
         }
 
-        public override Task SignIn()
+        public override Task Authorize()
         {
             throw new NotImplementedException();
         }
 
-        public override Task SignIn(string userId)
+        public override Task Authorize(string userId)
         {
             throw new NotImplementedException();
         }

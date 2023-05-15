@@ -11,7 +11,7 @@
 //        internal static extern void InitGsiClient(string webClientId);
 
 //        [DllImport("__Internal")]
-//        internal static extern void SignIn(Action<string> onSuccess, Action<string> onFailure);
+//        internal static extern void Authorize(Action<string> onSuccess, Action<string> onFailure);
 
 //        [MonoPInvokeCallback(typeof(Action<string>))]
 //        private static void OnSuccess(string idToken)
@@ -41,7 +41,7 @@
 //        protected override void BeginSignIn(GoogleRequestAsyncOperation operation)
 //        {
 //            _operation = operation;
-//            SignIn(OnSuccess, OnFailure);
+//            Authorize(OnSuccess, OnFailure);
 //        }
 //    }
 //}

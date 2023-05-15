@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Izhguzin.GoogleIdentity.JWTDecoder;
 using Izhguzin.GoogleIdentity.Utils;
 using Unity.VisualScripting.FullSerializer;
 
@@ -67,16 +68,32 @@ namespace Izhguzin.GoogleIdentity
             return IssuedUtc.AddSeconds(ExpiresInSeconds - TokenHardExpiryTimeWindowSeconds) <= DateTime.UtcNow;
         }
 
-        public async Task<bool> RefreshTokenAsync()
+        public UserCredential GetUserCredential()
         {
-            return await ((BaseIdentityService)GoogleIdentityService.Instance)
+            if (string.IsNullOrEmpty(IdToken)) return null;
+
+            return Decoder.DecodePayload<UserCredential>(IdToken);
+        }
+
+        public async Task RefreshTokenAsync()
+        {
+            if (string.IsNullOrEmpty(RefreshToken))
+                throw new RequestFailedException(CommonErrorCodes.Error,
+                    "An error occurred while refreshing the token. TokenResponse does not contain RefreshToken. To retrieve it, revoke access and authorize again.");
+
+            await GoogleIdentityService.Instance
                 .RefreshTokenAsync(this);
         }
 
-        public async Task<bool> RevokeAccessAsync()
+        public async Task RevokeAccessAsync()
         {
-            return await ((BaseIdentityService)GoogleIdentityService.Instance)
+            await GoogleIdentityService.Instance
                 .RevokeAccessAsync(this);
+        }
+
+        public async Task CacheAsync(string userId)
+        {
+            await GoogleIdentityService.Instance.CacheTokenAsync(userId, this);
         }
 
         /// <exception cref="JsonDeserializationException"></exception>

@@ -62,7 +62,7 @@
 
 //                InvokeOnSuccess(credential, operation);
 //            }
-//            catch (GoogleSignInException exception)
+//            catch (RequestFailedException exception)
 //            {
 //                OnExceptionCatch(operation, exception.CommonStatus, exception);
 //            }
@@ -72,7 +72,7 @@
 //            }
 //        }
 
-//        /// <exception cref="GoogleSignInException"></exception>
+//        /// <exception cref="RequestFailedException"></exception>
 //        /// <exception cref="NullReferenceException"></exception>
 //        private async Task<UserCredential> SendCodeExchangeRequestAsync(string code, string codeVerifier,
 //            string                                                             redirectUri)
@@ -93,7 +93,7 @@
 //            }
 //            catch (Exception exception)
 //            {
-//                throw new GoogleSignInException(CommonStatus.ResponseError,
+//                throw new RequestFailedException(CommonStatus.ResponseError,
 //                    $"Failed to exchange authorization code for access token: {exception.Message}");
 //            }
 //        }
@@ -112,15 +112,15 @@
 //            return request;
 //        }
 
-//        /// <exception cref="GoogleSignInException"></exception>
+//        /// <exception cref="RequestFailedException"></exception>
 //        private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)
 //        {
 //            if (tokenRequest.result != UnityWebRequest.Result.Success)
-//                throw new GoogleSignInException(CommonStatus.ResponseError,
+//                throw new RequestFailedException(CommonStatus.ResponseError,
 //                    $"{method} request failed with error: {tokenRequest.error}");
 
 //            if (tokenRequest.responseCode != 200)
-//                throw new GoogleSignInException(CommonStatus.ResponseError,
+//                throw new RequestFailedException(CommonStatus.ResponseError,
 //                    $"{method} request failed with status code {tokenRequest.responseCode} and message: {tokenRequest.downloadHandler.text}");
 //        }
 //    }

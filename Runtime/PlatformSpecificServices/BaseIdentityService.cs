@@ -18,17 +18,13 @@ namespace Izhguzin.GoogleIdentity
             Options = options;
         }
 
-        public abstract event Action                        OnSignIn;
-        public abstract event Action<GoogleSignInException> OnRequestError;
-        public abstract event Action                        OnSignOut;
+        public abstract Task<TokenResponse> Authorize();
 
-        public abstract bool InProgress();
+        public Task<TokenResponse> GetCachedTokenAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
 
-        public abstract Task SignIn();
-
-        public abstract Task SignIn(string userId);
-
-        public abstract   void SignOut();
         internal abstract Task InitializeAsync();
 
         internal abstract Task<bool> RefreshTokenAsync(TokenResponse token);

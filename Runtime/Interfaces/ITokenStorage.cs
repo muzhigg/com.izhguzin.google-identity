@@ -12,7 +12,7 @@ namespace Izhguzin.GoogleIdentity
         /// </summary>
         /// <param name="userId">Unique user identifier, use this parameter as a key.</param>
         /// <param name="jsonToken">Access token in json format.</param>
-        public Task SaveToken(string userId, string jsonToken);
+        public Task SaveTokenAsync(string userId, string jsonToken);
 
         /// <summary>
         ///     GoogleIdentityService calls this method before the authorization flow.
@@ -21,12 +21,12 @@ namespace Izhguzin.GoogleIdentity
         /// </summary>
         /// <param name="userId">Unique user identifier, use this parameter as a key.</param>
         /// <returns>Access token in json format.</returns>
-        public Task<string> LoadToken(string userId);
+        public Task<string> LoadTokenAsync(string userId);
 
         /// <summary>
         ///     GoogleIdentityService calls this method when the user revokes access.
         /// </summary>
         /// <param name="userId">Unique user identifier, use this parameter as a key.</param>
-        public Task DeleteToken(string userId);
+        public Task DeleteTokenAsync(string userId);
     }
 }

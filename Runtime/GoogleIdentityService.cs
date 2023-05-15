@@ -1,17 +1,24 @@
 using System;
+using System.Text;
 using System.Threading.Tasks;
+using Izhguzin.GoogleIdentity.Standalone;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Izhguzin.GoogleIdentity
 {
     /// <summary>
     ///     Entry class to the Authentication Service.
     /// </summary>
-    public sealed class GoogleIdentityService
+    public abstract class GoogleIdentityService : IIdentityService
     {
         public static async Task InitializeAsync(GoogleAuthOptions options)
         {
+            if (_instance != null)
+                throw new InitializationException(
+                    "You are attempting to initialize a Google Identity Service that has already been initialized.");
+
             if (UnityMainThread.IsRunningOnMainThread() == false)
                 throw new InitializationException(
                     "You are attempting to initialize Google Identity Service from a non-Unity Main Thread. Google Identity Service can only be initialized from Main Thread");
@@ -20,10 +27,10 @@ namespace Izhguzin.GoogleIdentity
                 throw new InitializationException(
                     "You are attempting to initialize Google Identity Service in Edit Mode. Google Identity Service can only be initialized in Play Mode");
 
-            IIdentityService instance = CreateInstance(options);
+            GoogleIdentityService instance = CreateInstance(options);
             try
             {
-                await ((BaseIdentityService)instance).InitializeAsync();
+                await instance.InitializeAsync();
             }
             catch (Exception ex)
             {
@@ -34,7 +41,7 @@ namespace Izhguzin.GoogleIdentity
             _instance = instance;
         }
 
-        private static IIdentityService CreateInstance(GoogleAuthOptions options)
+        private static GoogleIdentityService CreateInstance(GoogleAuthOptions options)
         {
 #if UNITY_STANDALONE
             return new StandaloneIdentityService(options);
@@ -49,28 +56,11 @@ namespace Izhguzin.GoogleIdentity
 #endif
         }
 
-        //private static string GenerateMessage(CommonStatus commonStatus)
-        //{
-        //    return commonStatus switch
-        //    {
-        //        CommonStatus.ResponseError          => "Google server response error. Try again later.",
-        //        CommonStatus.InvalidAccount         => "Invalid account.",
-        //        CommonStatus.NetworkError           => "Connection error. Try again later.",
-        //        CommonStatus.DeveloperError         => "Developer error. Please check application configuration.",
-        //        CommonStatus.Error                  => "Unexpected error occurred.",
-        //        CommonStatus.Timeout                => "Timeout while awaiting response. Try again later.",
-        //        CommonStatus.Canceled               => "Operation canceled.",
-        //        CommonStatus.DeserializationError   => "Deserialization Error.",
-        //        CommonStatus.LoadingCachedUserError => "Error when loading data. Please sign out and sign in again.",
-        //        _                                   => null
-        //    };
-        //}
-
-        private static IIdentityService _instance;
+        private static GoogleIdentityService _instance;
 
         #region Fileds and Properties
 
-        public static IIdentityService Instance
+        public static GoogleIdentityService Instance
         {
             get
             {
@@ -82,111 +72,160 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
+        protected GoogleAuthOptions Options { get; }
+
         #endregion
 
-        ///// <summary>
-        /////     The current user who gave access to his profile.
-        /////     The property will have a null value in cases when the client object is just created and when it is logged out.
-        ///// </summary>
-        //public UserCredential CurrentUser { get; protected set; }
+        protected GoogleIdentityService(GoogleAuthOptions options)
+        {
+            Options = options;
+        }
 
-        ///// <summary>
-        /////     The status of the last operation performed by this client.
-        ///// </summary>
-        //public CommonStatus Status
-        //{
-        //    get => _inProgress ? CommonStatus.InProgress : _status;
-        //    private set => _status = value;
-        //}
+        public abstract Task<TokenResponse> Authorize();
 
-        //protected readonly GoogleAuthOptions options;
+        public async Task<TokenResponse> GetCachedTokenAsync(string userId)
+        {
+            if (Options.TokenStorage == null)
+            {
+                Debug.LogWarning("To get a cached token, you must first set the storage to GoogleAuthOptions.");
+                return null;
+            }
 
-        //private bool         _inProgress;
-        //private CommonStatus _status = CommonStatus.Success;
+            string tokenJson = await Options.TokenStorage.LoadTokenAsync(userId);
 
-        ///// <inheritdoc />
-        //public bool InProgress()
-        //{
-        //    return _inProgress;
-        //}
+            if (string.IsNullOrEmpty(tokenJson))
+            {
+                Debug.LogWarning("TokenStorage did not return a json string.");
+                return null;
+            }
 
-        /// <inheritdoc />
-        //public GoogleRequestAsyncOperation SignIn()
-        //{
-        //    GoogleRequestAsyncOperation asyncOp = new(this);
+            TokenResponse response = TokenResponse.FromJson(tokenJson);
+            return response;
+        }
 
-        //    Task.Run(() =>
-        //    {
-        //        if (!CanBeginOperation(asyncOp)) return;
+        protected async Task<TokenResponse> SendCodeExchangeRequestAsync(string code, string codeVerifier,
+            string                                                              redirectUri)
+        {
+            TokenRequestUrl tokenRequestUrl = new()
+            {
+                Code         = code,
+                RedirectUri  = redirectUri,
+                ClientId     = Options.ClientId,
+                ClientSecret = Options.ClientSecret,
+                CodeVerifier = codeVerifier
+            };
 
-        //        if (CurrentUser != null)
-        //        {
-        //            UnityMainThread.RunOnMainThread(() => InvokeOnSuccess(CurrentUser, asyncOp, true));
-        //            return;
-        //        }
+            using UnityWebRequest webRequest = CreatePostRequest(tokenRequestUrl);
+            await webRequest.SendWebRequest();
+            try
+            {
+                CheckResponseForErrors(webRequest, "Token exchange");
+            }
+            catch (RequestFailedException exception)
+            {
+                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError, exception.Message);
+            }
 
-        //        UnityMainThread.RunOnMainThread(() => BeginSignIn(asyncOp));
-        //    });
+            try
+            {
+                return TokenResponse.FromJson(webRequest.downloadHandler.text);
+            }
+            catch (Exception exception)
+            {
+                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
+                    $"Failed to exchange authorization code for access token: {exception.Message}");
+            }
+        }
 
-        //    return asyncOp;
-        //}
+        internal abstract Task InitializeAsync();
 
-        //public GoogleRequestAsyncOperation SignOut()
-        //{
-        //    GoogleRequestAsyncOperation asyncOp = new(this);
+        internal async Task RefreshTokenAsync(TokenResponse token)
+        {
+            RefreshTokenRequestUrl requestUrl = new()
+            {
+                RefreshToken = token.RefreshToken,
+                ClientId     = Options.ClientId,
+                ClientSecret = Options.ClientSecret
+            };
 
-        //    Task.Run(() =>
-        //    {
-        //        if (!CanBeginOperation(asyncOp)) return;
+            using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
+            await webRequest.SendWebRequest();
+            CheckResponseForErrors(webRequest, "Refresh token");
 
-        //        UnityMainThread.RunOnMainThread(() => BeginSignOut(asyncOp));
-        //    });
+            try
+            {
+                Debug.Log(webRequest.downloadHandler.text);
+                RefreshTokenProperties(token, webRequest.downloadHandler.text);
+            }
+            catch (Exception exception)
+            {
+                throw new RequestFailedException(CommonErrorCodes.ResponseError,
+                    $"Failed to refresh token: {exception.Message}");
+            }
+        }
 
-        //    return asyncOp;
-        //}
+        internal async Task RevokeAccessAsync(TokenResponse token)
+        {
+            if (token.IsEffectivelyExpired()) await token.RefreshTokenAsync();
 
-        //protected void BeginSignOut(GoogleRequestAsyncOperation operation) { }
+            RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
 
-        //protected void BeginSignIn(GoogleRequestAsyncOperation operation) { }
+            using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
+            await webRequest.SendWebRequest();
+            CheckResponseForErrors(webRequest, "Revoke access");
+        }
 
-        //protected void InvokeOnSuccess(UserCredential credential, GoogleRequestAsyncOperation asyncOp)
-        //{
-        //    CurrentUser = credential;
-        //    InvokeOnComplete(asyncOp, CommonStatus.Success);
-        //}
+        internal async Task CacheTokenAsync(string userId, TokenResponse tokenResponse)
+        {
+            if (Options.TokenStorage == null)
+            {
+                Debug.LogWarning("To cache a token, you must first set the storage to GoogleAuthOptions.");
+                return;
+            }
 
-        //protected void InvokeOnSuccess(UserCredential credential, GoogleRequestAsyncOperation asyncOp, bool fromCache)
-        //{
-        //    CurrentUser = credential;
-        //    InvokeOnComplete(asyncOp, fromCache ? CommonStatus.SuccessCache : CommonStatus.Success);
-        //}
+            if (string.IsNullOrEmpty(tokenResponse.RefreshToken))
+            {
+                Debug.LogError("TokenResponse does not contain RefreshToken. There is no point in caching.");
+                return;
+            }
 
-        //protected void InvokeOnComplete(GoogleRequestAsyncOperation asyncOp, CommonStatus code)
-        //{
-        //    Status        = code;
-        //    asyncOp.Error = GenerateMessage(code);
-        //    UnityMainThread.RunOnMainThread(() => asyncOp.InvokeCompletionEvent(code));
-        //    _inProgress = false;
-        //}
+            await Options.TokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
+        }
 
-        //protected void OnExceptionCatch(GoogleRequestAsyncOperation asyncOperation, CommonStatus commonStatus,
-        //    Exception                                               exception)
-        //{
-        //    InvokeOnComplete(asyncOperation, commonStatus);
-        //    Debug.LogException(exception);
-        //}
+        private void RefreshTokenProperties(TokenResponse tokenResponse, string json)
+        {
+            TokenResponse newResponse = TokenResponse.FromJson(json);
+            tokenResponse.IdToken          = newResponse.IdToken;
+            tokenResponse.AccessToken      = newResponse.AccessToken;
+            tokenResponse.ExpiresInSeconds = newResponse.ExpiresInSeconds;
+            tokenResponse.IssuedUtc        = newResponse.IssuedUtc;
+            tokenResponse.Scope            = newResponse.Scope;
+            tokenResponse.TokenType        = newResponse.TokenType;
+        }
 
-        //private bool CanBeginOperation(GoogleRequestAsyncOperation asyncOp)
-        //{
-        //    if (InProgress())
-        //    {
-        //        Debug.LogWarning("GoogleIdentityService is already performing the request.");
-        //        InvokeOnComplete(asyncOp, CommonStatus.Canceled);
-        //        return false;
-        //    }
+        private UnityWebRequest CreatePostRequest(RequestUrl url)
+        {
+            UnityWebRequest request = new(url.EndPointUrl, UnityWebRequest.kHttpVerbPOST)
+            {
+                uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(url.BuildBody()))
+                {
+                    contentType = "application/x-www-form-urlencoded"
+                },
+                downloadHandler = new DownloadHandlerBuffer()
+            };
 
-        //    _inProgress = true;
-        //    return true;
-        //}
+            return request;
+        }
+
+        private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)
+        {
+            if (tokenRequest.result != UnityWebRequest.Result.Success)
+                throw new RequestFailedException(CommonErrorCodes.ResponseError,
+                    $"{method} request failed with error: {tokenRequest.error}");
+
+            if (tokenRequest.responseCode != 200)
+                throw new RequestFailedException(CommonErrorCodes.ResponseError,
+                    $"{method} request failed with status code {tokenRequest.responseCode} and message: {tokenRequest.downloadHandler.text}");
+        }
     }
 }

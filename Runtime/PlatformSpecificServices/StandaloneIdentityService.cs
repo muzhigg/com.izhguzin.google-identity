@@ -1,67 +1,64 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Izhguzin.GoogleIdentity.Flows;
 using Izhguzin.GoogleIdentity.Standalone;
+using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
 {
-    internal class StandaloneIdentityService : BaseIdentityService
+    internal class StandaloneIdentityService : GoogleIdentityService
     {
-        public override event Action                        OnSignIn;
-        public override event Action<GoogleSignInException> OnRequestError;
-        public override event Action                        OnSignOut;
-
-        #region Fileds and Properties
-
-        private          AuthorizationRequestUrl _authorizationRequestUrl;
-        private readonly bool                    _inProgress = false;
-
-        #endregion
-
         public StandaloneIdentityService(GoogleAuthOptions options) : base(options) { }
 
-        public override bool InProgress()
+        public override async Task<TokenResponse> Authorize()
         {
-            return _inProgress;
-        }
+            AuthorizationRequestUrl requestUrl = GetAuthorizationRequestUrl();
+            HttpCodeListener        listener   = new(requestUrl.RedirectUri, Options.ResponseHtml);
 
-        public override async Task SignIn()
-        {
-            //HttpCodeListener listener = new(_authorizationRequestUrl.RedirectUri,
-            //    Options.ResponseHtml);
-            await Flow.Authorize();
-        }
+            Application.OpenURL(requestUrl.BuildUrl());
 
-        public override Task SignIn(string userId)
-        {
-            throw new NotImplementedException();
-        }
+            string code = await listener.WaitForCodeAsync(requestUrl.State);
 
-        public override void SignOut()
-        {
-            throw new NotImplementedException();
+            TokenResponse result =
+                await SendCodeExchangeRequestAsync(code, requestUrl.ProofCodeKey.codeVerifier, requestUrl.RedirectUri);
+
+            return result;
         }
 
         internal override Task InitializeAsync()
         {
-            Flow = Options.UseAuthorizationCodeFlow
-                ? new StandaloneAuthorizationCodeFlow(Options)
-                : new StandaloneImplicitFlow(Options);
-
-            _authorizationRequestUrl =
-                ((IStandaloneAuthorizationModel)Flow).GetAuthorizationRequestUrl();
-
             return Task.CompletedTask;
         }
 
-        internal override Task<bool> RefreshTokenAsync(TokenResponse token)
-        {
-            throw new NotImplementedException();
-        }
+        //internal override async Task RefreshTokenAsync(TokenResponse token)
+        //{
+        //    RefreshTokenRequestUrl requestUrl = new()
+        //    {
+        //        RefreshToken = token.RefreshToken
+        //    };
+        //}
 
-        internal override Task<bool> RevokeAccessAsync(TokenResponse token)
+        //internal override Task RevokeAccessAsync(TokenResponse token)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        private AuthorizationRequestUrl GetAuthorizationRequestUrl()
         {
-            throw new NotImplementedException();
+            try
+            {
+                AuthorizationRequestUrl result = AuthorizationRequestUrl
+                    .CreateDefaultWithOptions(Options);
+                result.ResponseType = "code";
+                result.AccessType   = "offline";
+                result.Prompt       = "consent";
+                result.ProofCodeKey = new AuthorizationRequestUrl.ProofKey(true);
+
+                return result;
+            }
+            catch (NullReferenceException exception)
+            {
+                throw AuthorizationFailedException.Create(CommonErrorCodes.DeveloperError, exception);
+            }
         }
     }
 }

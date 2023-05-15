@@ -16,32 +16,25 @@ namespace Izhguzin.GoogleIdentity.Standalone
 
         #endregion
 
-        /// <exception cref="GoogleSignInException"></exception>
+        /// <exception cref="HttpListenerException"></exception>
         public HttpCodeListener(string uri, string responseHtml)
         {
             _responseHtml = responseHtml;
             _httpListener = new HttpListener();
+
             try
             {
                 _httpListener.Prefixes.Add(uri);
             }
             catch (HttpListenerException exception)
             {
-                throw new GoogleSignInException(CommonStatus.NetworkError,
-                    $"Error occurred in HttpListener: Failed to add prefix {uri}: {exception.Message}");
+                throw AuthorizationFailedException.Create(CommonErrorCodes.NetworkError, new HttpListenerException(
+                    exception.ErrorCode,
+                    $"Failed to add prefix {uri} ({exception.Message})"));
             }
         }
 
-        /// <exception cref="GoogleSignInException"></exception>
         public async Task<string> WaitForCodeAsync(string state)
-        {
-            string code = null;
-            await StartAsync(state, s => code = s);
-            return code;
-        }
-
-        /// <exception cref="GoogleSignInException"></exception>
-        public async Task StartAsync(string state, Action<string> callback)
         {
             try
             {
@@ -49,35 +42,36 @@ namespace Izhguzin.GoogleIdentity.Standalone
             }
             catch (HttpListenerException ex)
             {
-                throw new GoogleSignInException(CommonStatus.NetworkError,
-                    $"Error occurred in HttpListener: {ex.Message}");
+                throw AuthorizationFailedException.Create(CommonErrorCodes.NetworkError,
+                    new HttpListenerException(ex.ErrorCode, $"Failed to start listening ({ex.Message})"));
             }
 
             Task                      timeoutTask   = Task.Delay(TimeSpan.FromMinutes(1));
             Task<HttpListenerContext> contextTask   = _httpListener.GetContextAsync();
             Task                      completedTask = await Task.WhenAny(contextTask, timeoutTask);
             if (completedTask == timeoutTask)
-                throw new GoogleSignInException(CommonStatus.Timeout, "Timeout waiting for incoming requests.");
+                throw AuthorizationFailedException.Create(CommonErrorCodes.Timeout,
+                    new TimeoutException("Timeout waiting for incoming requests."));
 
             HttpListenerContext context = contextTask.Result;
-            await ProcessResponseAsync(context, state, callback);
+            return await ProcessResponseAsync(context, state);
         }
 
         private void CheckForErrors(NameValueCollection query)
         {
             if (query.Get("error") != null)
-                throw new GoogleSignInException(CommonStatus.ResponseError,
+                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
                     $"OAuth authorization error: {query.Get("error")}.");
 
-            query.Get("code").ThrowIfNull(new GoogleSignInException(CommonStatus.ResponseError,
+            query.Get("code").ThrowIfNull(new AuthorizationFailedException(CommonErrorCodes.ResponseError,
                 "Malformed authorization response. Code value is null."));
 
-            query.Get("state").ThrowIfNull(new GoogleSignInException(CommonStatus.ResponseError,
+            query.Get("state").ThrowIfNull(new AuthorizationFailedException(CommonErrorCodes.ResponseError,
                 "Malformed authorization response. State value is null"));
         }
 
-        /// <exception cref="GoogleSignInException"></exception>
-        private async Task ProcessResponseAsync(HttpListenerContext context, string state, Action<string> callback)
+        /// <exception cref="RequestFailedException"></exception>
+        private async Task<string> ProcessResponseAsync(HttpListenerContext context, string state)
         {
             try
             {
@@ -87,14 +81,14 @@ namespace Izhguzin.GoogleIdentity.Standalone
                 string incomingState = query.Get("state");
 
                 if (incomingState != state)
-                    throw new GoogleSignInException(CommonStatus.ResponseError,
+                    throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
                         $"Received request with invalid state ({incomingState})");
 
                 await SendResponseAsync(context);
                 _httpListener.Stop();
-                callback.Invoke(code);
+                return code;
             }
-            catch (GoogleSignInException)
+            catch (RequestFailedException)
             {
                 _httpListener.Stop();
                 throw;
@@ -113,7 +107,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
             }
             catch (InvalidOperationException exception)
             {
-                throw new GoogleSignInException(CommonStatus.ResponseError,
+                throw new AuthorizationFailedException(CommonErrorCodes.DeveloperError,
                     $"Error occurred in HttpListenerResponse: {exception.Message}");
             }
             finally

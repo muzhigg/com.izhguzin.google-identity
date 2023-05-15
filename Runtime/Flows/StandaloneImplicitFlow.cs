@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Standalone;
-using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Flows
 {
@@ -10,31 +9,46 @@ namespace Izhguzin.GoogleIdentity.Flows
         #region Fileds and Properties
 
         private readonly GoogleAuthOptions       _options;
-        private readonly AuthorizationRequestUrl _authorizationRequestUrl;
+        private          AuthorizationRequestUrl _authorizationRequestUrl;
 
         #endregion
 
         public StandaloneImplicitFlow(GoogleAuthOptions options)
         {
-            _options                 = options;
-            _authorizationRequestUrl = GetAuthorizationRequestUrl();
+            _options = options;
         }
 
-        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="RequestFailedException"></exception>
         public AuthorizationRequestUrl GetAuthorizationRequestUrl()
         {
-            AuthorizationRequestUrl result = AuthorizationRequestUrl
-                .CreateDefaultWithOptions(_options);
-            result.ResponseType = "token id_token";
-            result.Nonce        = PKCECodeProvider.GetRandomBase64URL(32);
+            try
+            {
+                AuthorizationRequestUrl result = AuthorizationRequestUrl
+                    .CreateDefaultWithOptions(_options);
+                result.ResponseType = "token id_token";
+                result.Nonce        = PKCECodeProvider.GetRandomBase64URL(32);
 
-            return result;
+                return result;
+            }
+            catch (NullReferenceException exception)
+            {
+                throw RequestFailedException.Create(CommonErrorCodes.DeveloperError, exception);
+            }
         }
 
+        /// <exception cref="RequestFailedException"></exception>
         public async Task Authorize()
         {
-            Debug.Log(_authorizationRequestUrl.BuildUrl());
-            Application.OpenURL(_authorizationRequestUrl.BuildUrl());
+            //// ok
+            //_authorizationRequestUrl = GetAuthorizationRequestUrl();
+
+            //// ok
+            //HttpTokenListener listener = new(_authorizationRequestUrl.RedirectUri,
+            //    _options.ResponseHtml);
+
+            //Application.OpenURL(_authorizationRequestUrl.BuildUrl());
+
+            //TokenResponse tokenResponse = await listener.WaitForTokenAsync(_authorizationRequestUrl.State);
         }
     }
 }
