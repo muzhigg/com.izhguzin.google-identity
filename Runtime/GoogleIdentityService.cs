@@ -115,9 +115,13 @@ namespace Izhguzin.GoogleIdentity
                 CodeVerifier = codeVerifier
             };
 
-            using UnityWebRequest webRequest = CreatePostRequest(tokenRequestUrl);
-            await webRequest.SendWebRequest();
+            Debug.Log(3);
+            Debug.Log(tokenRequestUrl.BuildBody());
 
+            using UnityWebRequest webRequest = CreatePostRequest(tokenRequestUrl);
+            Debug.Log(5);
+            await webRequest.SendWebRequest();
+            Debug.Log(6);
             try
             {
                 CheckResponseForErrors(webRequest, "Token exchange");
@@ -207,6 +211,7 @@ namespace Izhguzin.GoogleIdentity
 
         private UnityWebRequest CreatePostRequest(RequestUrl url)
         {
+            Debug.Log(4);
             UnityWebRequest request = new(url.EndPointUrl, UnityWebRequest.kHttpVerbPOST)
             {
                 uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(url.BuildBody()))
@@ -223,7 +228,7 @@ namespace Izhguzin.GoogleIdentity
         {
             if (tokenRequest.result != UnityWebRequest.Result.Success)
                 throw new RequestFailedException(CommonErrorCodes.ResponseError,
-                    $"{method} request failed with error: {tokenRequest.error}");
+                    $"{method} request failed with error: ({tokenRequest.error}) {tokenRequest.downloadHandler.text}");
 
             if (tokenRequest.responseCode != 200)
                 throw new RequestFailedException(CommonErrorCodes.ResponseError,

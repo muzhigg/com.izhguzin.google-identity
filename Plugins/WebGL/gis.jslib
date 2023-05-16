@@ -57,11 +57,18 @@ const library = {
 			}, () => {
 				try {
                     googleIdentityService.client = google.accounts.oauth2.initCodeClient({
-                        client_id: UTF8ToString(clientIdStr),
-                        scope: UTF8ToString(scopeStr),
+                        client_id: clientIdStr,
+                        scope: scopeStr,
                         ux_mode: 'popup',
-                        callback: (response) => {},
-                        error_callback: (error) => {},
+                        callback: (response) => {
+							console.log(response.error);
+							dynCall('vi', callbackPtr, [googleIdentityService.allocateUnmanagedString(response.code)]);
+						},
+                        error_callback: (error) => {
+							console.log(error.message);
+							console.log(error.type);
+							dynCall('vi', errorCallbackPtr, [googleIdentityService.allocateUnmanagedString(error.type)]);
+						},
                     });
     
                     googleIdentityService.isInitialized = true;
@@ -70,6 +77,10 @@ const library = {
                     dynCall('vi', initCallbackPtr, [googleIdentityService.allocateUnmanagedString('[WEB GIS ERROR] ' + error.message)]);
                 }
             });
+		},
+
+		googleIdentityServiceRequestCode: function () {
+			googleIdentityService.client.requestCode();
 		},
 
 		allocateUnmanagedString: function (string) {
@@ -85,8 +96,37 @@ const library = {
     },
 
 	InitializeGisCodeClient: function (initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr) {
-		googleIdentityService.googleIdentityServiceInitializeCodeClient(initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr);
-	}
+		googleIdentityService.googleIdentityServiceInitializeCodeClient(initCallbackPtr, UTF8ToString(clientIdStr), UTF8ToString(scopeStr), callbackPtr, errorCallbackPtr);
+	},
+
+	AuthorizeGIS: function () {
+		googleIdentityService.googleIdentityServiceRequestCode();
+	},
+	
+	GetURLFromPage: function () {
+
+        var returnStr = "not found";
+
+        try{
+
+            returnStr = (window.location != window.parent.location)
+
+            ? document.referrer : document.location.href;
+
+        } catch (error) {
+
+            console.error('Error while getting Url: '+ error);
+
+        }
+
+       
+
+        var bufferSize = lengthBytesUTF8(returnStr) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(returnStr, buffer, bufferSize);
+        return buffer;
+
+    }
 }
 
 autoAddDeps(library, '$googleIdentityService');
