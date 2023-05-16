@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Android
@@ -9,9 +10,9 @@ namespace Izhguzin.GoogleIdentity.Android
         {
             #region Fileds and Properties
 
-            public string Value { get; private set; }
+            public string Code { get; private set; }
 
-            public CommonStatus StatusCode { get; private set; }
+            public int StatusCode { get; private set; }
 
             public string Error { get; private set; }
 
@@ -25,14 +26,15 @@ namespace Izhguzin.GoogleIdentity.Android
                 _callback = callback;
             }
 
-            private void onComplete(string value, int statusCode, string errorMessage)
+            private void onComplete(string code, int statusCode, string errorMessage)
             {
-                CommonStatus status = Enum.IsDefined(typeof(CommonStatus), statusCode)
-                    ? (CommonStatus)statusCode
-                    : CommonStatus.Error;
-
-                Value      = value;
-                StatusCode = status;
+                //CommonStatus status = Enum.IsDefined(typeof(CommonStatus), statusCode)
+                //    ? (CommonStatus)statusCode
+                //    : CommonStatus.Error;
+                Debug.Log(Thread.CurrentThread.ManagedThreadId);
+                //AndroidJNI.AttachCurrentThread();
+                Code       = code;
+                StatusCode = statusCode;
                 Error      = errorMessage;
 
                 _callback(this);
@@ -46,24 +48,14 @@ namespace Izhguzin.GoogleIdentity.Android
             androidJavaObject.Call("initOptions", options.GetAndroidJavaObject());
         }
 
-        public void ConfigureClient(string clientId, bool singleUse)
-        {
-            androidJavaObject.Call("configureClient", clientId, singleUse);
-        }
-
         public void SignIn(OnTaskCompleteListener listener)
         {
             androidJavaObject.Call("signIn", listener);
         }
 
-        public void SignOut(OnTaskCompleteListener listener)
+        public void SignOut()
         {
-            androidJavaObject.Call("signOut", listener);
-        }
-
-        public void RevokeAccess(OnTaskCompleteListener listener)
-        {
-            androidJavaObject.Call("revokeAccess", listener);
+            androidJavaObject.Call("signOut");
         }
     }
 }

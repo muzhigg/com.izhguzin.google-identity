@@ -52,8 +52,8 @@
 //        private void PerformSignIn(GoogleRequestAsyncOperation operation,
 //            GoogleSignInClientProxy.OnTaskCompleteListener     listener)
 //        {
-//            UserCredential credential = Decoder.DecodePayload<UserCredential>(listener.Value);
-//            credential.Token = new TokenResponse { IdToken = listener.Value };
+//            UserCredential credential = Decoder.DecodePayload<UserCredential>(listener.Code);
+//            credential.Token = new TokenResponse { IdToken = listener.Code };
 //            InvokeOnSuccess(credential, operation, listener.StatusCode != CommonStatus.Success);
 //            _clientProxy.SignOut(new GoogleSignInClientProxy.OnTaskCompleteListener(completeListener =>
 //                completeListener.javaInterface.Dispose()));

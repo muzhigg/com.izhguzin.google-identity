@@ -91,9 +91,9 @@ namespace Izhguzin.GoogleIdentity
                 .RevokeAccessAsync(this);
         }
 
-        public async Task CacheAsync(string userId)
+        public async Task<bool> CacheAsync(string userId)
         {
-            await GoogleIdentityService.Instance.CacheTokenAsync(userId, this);
+            return await GoogleIdentityService.Instance.CacheTokenAsync(userId, this);
         }
 
         /// <exception cref="JsonDeserializationException"></exception>

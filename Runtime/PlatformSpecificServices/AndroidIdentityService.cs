@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Android;
-using Izhguzin.GoogleIdentity.Flows;
+using Izhguzin.GoogleIdentity.Utils;
+
+#pragma warning disable CS4014
 
 namespace Izhguzin.GoogleIdentity
 {
-    internal class AndroidIdentityService : BaseIdentityService
+    internal class AndroidIdentityService : GoogleIdentityService
     {
         #region Fileds and Properties
 
@@ -17,7 +19,14 @@ namespace Izhguzin.GoogleIdentity
 
         public override Task<TokenResponse> Authorize()
         {
-            throw new NotImplementedException();
+            _clientProxy.SignOut();
+
+            TaskCompletionSource<TokenResponse> completionSource = new();
+
+            _clientProxy.SignIn(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
+                UnityMainThread.RunOnMainThread(() => PerformCodeExchangeRequestAsync(listener, completionSource))));
+
+            return completionSource.Task;
         }
 
         internal override Task InitializeAsync()
@@ -29,22 +38,45 @@ namespace Izhguzin.GoogleIdentity
                     "The current Android Activity must be GsiAppCompatActivity " +
                     "or inherited from it.");
 
-            Flow = Options.UseAuthorizationCodeFlow
-                ? new AndroidAuthorizationCodeFlow(Options)
-                : throw new NotSupportedException(
-                    "Implicit Flow is not supported by Google on Android devices.");
+            using GoogleSignInOptions.Builder optionsBuilder =
+                new(GoogleSignInOptions.DefaultSignIn);
+
+            optionsBuilder.RequestServerAuthCode(Options.ClientId.ThrowIfNullOrEmpty(
+                new NullReferenceException(
+                    $"Client Id is not set in {nameof(GoogleAuthOptions)}.")));
+
+            Scope[] scopes = new Scope[Options.Scopes.Count];
+
+            for (int i = 0; i < scopes.Length; i++) scopes[i] = new Scope(Options.Scopes[i]);
+
+            optionsBuilder.RequestScopes(scopes);
+            _clientProxy.InitOptions(optionsBuilder.Build());
+
+            foreach (Scope scope in scopes) scope.Dispose();
 
             return Task.CompletedTask;
         }
 
-        internal override Task<bool> RefreshTokenAsync(TokenResponse token)
+        private async Task PerformCodeExchangeRequestAsync(GoogleSignInClientProxy.OnTaskCompleteListener listener,
+            TaskCompletionSource<TokenResponse> completionSource)
         {
-            throw new NotImplementedException();
-        }
+            if (listener.StatusCode is 1)
+                try
+                {
+                    TokenResponse result =
+                        await SendCodeExchangeRequestAsync(listener.Code, null, "");
+                    _clientProxy.SignOut();
+                    completionSource.SetResult(result);
+                }
+                catch (Exception ex)
+                {
+                    completionSource.SetException(ex);
+                }
+            else
+                completionSource.SetException(new AuthorizationFailedException(listener.StatusCode,
+                    $"An error occurred during authorization: {listener.Error}"));
 
-        internal override Task<bool> RevokeAccessAsync(TokenResponse token)
-        {
-            throw new NotImplementedException();
+            listener.javaInterface.Dispose();
         }
     }
 }

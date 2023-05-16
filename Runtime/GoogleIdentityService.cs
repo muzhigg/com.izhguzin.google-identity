@@ -117,6 +117,7 @@ namespace Izhguzin.GoogleIdentity
 
             using UnityWebRequest webRequest = CreatePostRequest(tokenRequestUrl);
             await webRequest.SendWebRequest();
+
             try
             {
                 CheckResponseForErrors(webRequest, "Token exchange");
@@ -175,21 +176,22 @@ namespace Izhguzin.GoogleIdentity
             CheckResponseForErrors(webRequest, "Revoke access");
         }
 
-        internal async Task CacheTokenAsync(string userId, TokenResponse tokenResponse)
+        internal async Task<bool> CacheTokenAsync(string userId, TokenResponse tokenResponse)
         {
             if (Options.TokenStorage == null)
             {
                 Debug.LogWarning("To cache a token, you must first set the storage to GoogleAuthOptions.");
-                return;
+                return false;
             }
 
             if (string.IsNullOrEmpty(tokenResponse.RefreshToken))
             {
                 Debug.LogError("TokenResponse does not contain RefreshToken. There is no point in caching.");
-                return;
+                return false;
             }
 
             await Options.TokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
+            return true;
         }
 
         private void RefreshTokenProperties(TokenResponse tokenResponse, string json)
