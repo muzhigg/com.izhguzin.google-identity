@@ -116,7 +116,7 @@ namespace Izhguzin.GoogleIdentity
                 return this;
             }
 
-            public Builder SetAuthorizationCodeFlow(ITokenStorage storage)
+            public Builder SetTokenStorage(ITokenStorage storage)
             {
                 _options.TokenStorage = storage;
 

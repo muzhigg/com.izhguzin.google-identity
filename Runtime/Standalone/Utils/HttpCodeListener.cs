@@ -50,8 +50,11 @@ namespace Izhguzin.GoogleIdentity.Standalone
             Task<HttpListenerContext> contextTask   = _httpListener.GetContextAsync();
             Task                      completedTask = await Task.WhenAny(contextTask, timeoutTask);
             if (completedTask == timeoutTask)
+            {
+                _httpListener.Stop();
                 throw AuthorizationFailedException.Create(CommonErrorCodes.Timeout,
                     new TimeoutException("Timeout waiting for incoming requests."));
+            }
 
             HttpListenerContext context = contextTask.Result;
             return await ProcessResponseAsync(context, state);
@@ -87,13 +90,11 @@ namespace Izhguzin.GoogleIdentity.Standalone
                         $"Received request with invalid state ({incomingState})");
 
                 await SendResponseAsync(context);
-                _httpListener.Stop();
                 return code;
             }
-            catch (AuthorizationFailedException)
+            finally
             {
                 _httpListener.Stop();
-                throw;
             }
         }
 

@@ -141,7 +141,7 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (RequestFailedException exception)
             {
-                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError, exception.Message);
+                throw new AuthorizationFailedException(exception.ErrorCode, exception.Message);
             }
 
             try
@@ -258,13 +258,24 @@ namespace Izhguzin.GoogleIdentity
 
         private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)
         {
-            if (tokenRequest.result != UnityWebRequest.Result.Success)
-                throw new RequestFailedException(CommonErrorCodes.ResponseError,
-                    $"{method} request failed with error: ({tokenRequest.error}) {tokenRequest.downloadHandler.text}");
+            if (tokenRequest.result == UnityWebRequest.Result.Success) return;
 
-            if (tokenRequest.responseCode != 200)
-                throw new RequestFailedException(CommonErrorCodes.ResponseError,
-                    $"{method} request failed with status code {tokenRequest.responseCode} and message: {tokenRequest.downloadHandler.text}");
+            RequestFailedException exception;
+
+            try
+            {
+                ErrorResponse errorResponse =
+                    StringSerializationAPI.Deserialize<ErrorResponse>(tokenRequest.downloadHandler.text);
+                exception = new RequestFailedException(CommonErrorCodes.ResponseError,
+                    $"{method} request failed with error ({errorResponse.ErrorDescription})");
+            }
+            catch (Exception)
+            {
+                exception = new RequestFailedException(CommonErrorCodes.ResponseError,
+                    $"{method} request failed with error: ({tokenRequest.error}) {tokenRequest.downloadHandler.text}");
+            }
+
+            throw exception;
         }
     }
 }
