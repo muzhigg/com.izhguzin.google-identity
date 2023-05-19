@@ -43,7 +43,7 @@ namespace Izhguzin.GoogleIdentity
 
         private static GoogleIdentityService CreateInstance(GoogleAuthOptions options)
         {
-#if UNITY_STANDALONE
+#if UNITY_STANDALONE || UNITY_EDITOR
             return new StandaloneIdentityService(options);
 #elif UNITY_ANDROID
             return new AndroidIdentityService(options);

@@ -108,6 +108,10 @@ namespace Izhguzin.GoogleIdentity
                     taskCompletionSource.SetException(new AuthorizationFailedException(CommonErrorCodes.Canceled,
                         "Popup window closed"));
                     break;
+                case "access_denied":
+                    taskCompletionSource.SetException(
+                        new AuthorizationFailedException(CommonErrorCodes.ResolutionRequired, ""));
+                    break;
                 default:
                     taskCompletionSource.SetException(new AuthorizationFailedException(CommonErrorCodes.Error,
                         "There was an error during authorization. Details in the browser console."));
@@ -119,8 +123,6 @@ namespace Izhguzin.GoogleIdentity
         {
             try
             {
-                Debug.Log(2);
-                Debug.Log(GetURLFromPage());
                 TokenResponse response = await SendCodeExchangeRequestAsync(code, null, "postmessage");
                 taskCompletionSource.SetResult(response);
             }

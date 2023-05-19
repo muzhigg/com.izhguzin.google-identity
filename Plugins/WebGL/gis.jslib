@@ -61,12 +61,9 @@ const library = {
                         scope: scopeStr,
                         ux_mode: 'popup',
                         callback: (response) => {
-							console.log(response.error);
 							dynCall('vi', callbackPtr, [googleIdentityService.allocateUnmanagedString(response.code)]);
 						},
                         error_callback: (error) => {
-							console.log(error.message);
-							console.log(error.type);
 							dynCall('vi', errorCallbackPtr, [googleIdentityService.allocateUnmanagedString(error.type)]);
 						},
                     });
