@@ -15,10 +15,6 @@ namespace Izhguzin.GoogleIdentity
     {
         public static async Task InitializeAsync(GoogleAuthOptions options)
         {
-            if (_instance != null)
-                throw new InitializationException(
-                    "You are attempting to initialize a Google Identity Service that has already been initialized.");
-
             if (UnityMainThread.IsRunningOnMainThread() == false)
                 throw new InitializationException(
                     "You are attempting to initialize Google Identity Service from a non-Unity Main Thread. Google Identity Service can only be initialized from Main Thread");
@@ -27,18 +23,35 @@ namespace Izhguzin.GoogleIdentity
                 throw new InitializationException(
                     "You are attempting to initialize Google Identity Service in Edit Mode. Google Identity Service can only be initialized in Play Mode");
 
-            GoogleIdentityService instance = CreateInstance(options);
+            if (_instance != null)
+                throw new InitializationException(
+                    "You are attempting to initialize a Google Identity Service that has already been initialized.");
+
             try
             {
+                CheckOptions(options);
+                GoogleIdentityService instance = CreateInstance(options);
                 await instance.InitializeAsync();
+                _instance = instance;
             }
             catch (Exception ex)
             {
                 throw new InitializationException(
                     $"An error occurred during initialization: {ex.Message}");
             }
+        }
 
-            _instance = instance;
+        private static void CheckOptions(GoogleAuthOptions options)
+        {
+            if (options.ClientId.IsNullOrEmpty())
+                throw new NullReferenceException("GoogleAuthOptions is missing a required parameter (client_id)");
+
+            if (options.ClientSecret.IsNullOrEmpty())
+                throw new NullReferenceException(
+                    "GoogleAuthOptions is missing a required parameter (client_secret)");
+
+            if (options.Scopes.Count == 0)
+                throw new NullReferenceException("GoogleAuthOptions is missing a required parameter (scopes)");
         }
 
         private static GoogleIdentityService CreateInstance(GoogleAuthOptions options)
@@ -115,13 +128,9 @@ namespace Izhguzin.GoogleIdentity
                 CodeVerifier = codeVerifier
             };
 
-            Debug.Log(3);
-            Debug.Log(tokenRequestUrl.BuildBody());
-
             using UnityWebRequest webRequest = CreatePostRequest(tokenRequestUrl);
-            Debug.Log(5);
             await webRequest.SendWebRequest();
-            Debug.Log(6);
+
             try
             {
                 CheckResponseForErrors(webRequest, "Token exchange");
@@ -137,8 +146,8 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (Exception exception)
             {
-                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
-                    $"Failed to exchange authorization code for access token: {exception.Message}");
+                throw new AuthorizationFailedException(CommonErrorCodes.DeserializationError,
+                    $"Deserialization error: {exception.Message}");
             }
         }
 
@@ -159,13 +168,12 @@ namespace Izhguzin.GoogleIdentity
 
             try
             {
-                Debug.Log(webRequest.downloadHandler.text);
                 RefreshTokenProperties(token, webRequest.downloadHandler.text);
             }
             catch (Exception exception)
             {
-                throw new RequestFailedException(CommonErrorCodes.ResponseError,
-                    $"Failed to refresh token: {exception.Message}");
+                throw new RequestFailedException(CommonErrorCodes.DeserializationError,
+                    $"Deserialization error: {exception.Message}");
             }
         }
 
@@ -190,7 +198,7 @@ namespace Izhguzin.GoogleIdentity
 
             if (string.IsNullOrEmpty(tokenResponse.RefreshToken))
             {
-                Debug.LogError("TokenResponse does not contain RefreshToken. There is no point in caching.");
+                Debug.LogWarning("TokenResponse does not contain RefreshToken. There is no point in caching.");
                 return false;
             }
 
@@ -211,7 +219,6 @@ namespace Izhguzin.GoogleIdentity
 
         private UnityWebRequest CreatePostRequest(RequestUrl url)
         {
-            Debug.Log(4);
             UnityWebRequest request = new(url.EndPointUrl, UnityWebRequest.kHttpVerbPOST)
             {
                 uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(url.BuildBody()))

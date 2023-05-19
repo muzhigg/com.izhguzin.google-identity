@@ -23,7 +23,7 @@ namespace Izhguzin.GoogleIdentity.Flows
         public AuthorizationRequestUrl GetAuthorizationRequestUrl()
         {
             AuthorizationRequestUrl result = AuthorizationRequestUrl
-                .CreateDefaultWithOptions(_options);
+                .CreateDefaultFromOptions(_options);
             result.ResponseType = "code";
             result.AccessType   = "offline";
             result.Prompt       = "consent";

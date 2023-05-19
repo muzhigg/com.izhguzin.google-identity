@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -38,11 +37,6 @@ namespace Izhguzin.GoogleIdentity.Android
 
             private void onComplete(string code, int statusCode, string errorMessage)
             {
-                //CommonStatus status = Enum.IsDefined(typeof(CommonStatus), statusCode)
-                //    ? (CommonStatus)statusCode
-                //    : CommonStatus.Error;
-                Debug.Log(Thread.CurrentThread.ManagedThreadId);
-                //AndroidJNI.AttachCurrentThread();
                 Code       = code;
                 StatusCode = statusCode;
                 Error      = errorMessage;

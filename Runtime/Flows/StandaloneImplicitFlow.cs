@@ -24,7 +24,7 @@ namespace Izhguzin.GoogleIdentity.Flows
             try
             {
                 AuthorizationRequestUrl result = AuthorizationRequestUrl
-                    .CreateDefaultWithOptions(_options);
+                    .CreateDefaultFromOptions(_options);
                 result.ResponseType = "token id_token";
                 result.Nonce        = PKCECodeProvider.GetRandomBase64URL(32);
 

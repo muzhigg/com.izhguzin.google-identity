@@ -14,7 +14,14 @@ namespace Izhguzin.GoogleIdentity
             AuthorizationRequestUrl requestUrl = GetAuthorizationRequestUrl();
             HttpCodeListener        listener   = new(requestUrl.RedirectUri, Options.ResponseHtml);
 
-            Application.OpenURL(requestUrl.BuildUrl());
+            try
+            {
+                Application.OpenURL(requestUrl.BuildUrl());
+            }
+            catch (NullReferenceException exception)
+            {
+                throw AuthorizationFailedException.Create(CommonErrorCodes.DeveloperError, exception);
+            }
 
             string code = await listener.WaitForCodeAsync(requestUrl.State);
 
@@ -29,25 +36,12 @@ namespace Izhguzin.GoogleIdentity
             return Task.CompletedTask;
         }
 
-        //internal override async Task RefreshTokenAsync(TokenResponse token)
-        //{
-        //    RefreshTokenRequestUrl requestUrl = new()
-        //    {
-        //        RefreshToken = token.RefreshToken
-        //    };
-        //}
-
-        //internal override Task RevokeAccessAsync(TokenResponse token)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         private AuthorizationRequestUrl GetAuthorizationRequestUrl()
         {
             try
             {
                 AuthorizationRequestUrl result = AuthorizationRequestUrl
-                    .CreateDefaultWithOptions(Options);
+                    .CreateDefaultFromOptions(Options);
                 result.ResponseType = "code";
                 result.AccessType   = "offline";
                 result.Prompt       = "consent";
@@ -55,9 +49,13 @@ namespace Izhguzin.GoogleIdentity
 
                 return result;
             }
-            catch (NullReferenceException exception)
+            catch (NotSupportedException exception)
             {
-                throw AuthorizationFailedException.Create(CommonErrorCodes.DeveloperError, exception);
+                throw AuthorizationFailedException.Create(CommonErrorCodes.NetworkError, exception);
+            }
+            catch (Exception exception)
+            {
+                throw AuthorizationFailedException.Create(CommonErrorCodes.NetworkError, exception);
             }
         }
     }

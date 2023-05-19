@@ -25,16 +25,5 @@ namespace Izhguzin.GoogleIdentity
         public override string EndPointUrl => GoogleAuthConstants.TokenUrl;
 
         #endregion
-
-        ///// <exception cref="NullReferenceException"></exception>
-        //public TokenRequestUrl(StandaloneSignInOptions options)
-        //{
-        //    ClientId = options.ClientId.ThrowIfNullOrEmpty(
-        //        new NullReferenceException($"Client ID not set in {typeof(GoogleAuthOptions)}."));
-
-        //    ClientSecret =
-        //        options.ClientSecret.ThrowIfNullOrEmpty(
-        //            new NullReferenceException($"Client secret not set in {typeof(GoogleAuthOptions)}."));
-        //}
     }
 }

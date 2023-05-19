@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using UnityEngine.Networking;
 
 namespace Izhguzin.GoogleIdentity.Standalone
@@ -7,7 +8,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
     {
         public abstract string EndPointUrl { get; }
 
-        /// <exception cref="RequestFailedException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public string BuildUrl()
         {
             string result = $"{EndPointUrl}?{BuildBody()}";
@@ -15,7 +16,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
             return result;
         }
 
-        /// <exception cref="RequestFailedException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public string BuildBody()
         {
             string queryParams = string.Empty;

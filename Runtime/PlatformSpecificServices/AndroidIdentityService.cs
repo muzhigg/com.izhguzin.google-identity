@@ -37,9 +37,7 @@ namespace Izhguzin.GoogleIdentity
             using GoogleSignInOptions.Builder optionsBuilder =
                 new(GoogleSignInOptions.DefaultSignIn);
 
-            optionsBuilder.RequestServerAuthCode(Options.ClientId.ThrowIfNullOrEmpty(
-                new NullReferenceException(
-                    $"Client Id is not set in {nameof(GoogleAuthOptions)}.")));
+            optionsBuilder.RequestServerAuthCode(Options.ClientId);
 
             Scope[] scopes = new Scope[Options.Scopes.Count];
 
@@ -75,7 +73,5 @@ namespace Izhguzin.GoogleIdentity
 
             listener.javaInterface.Dispose();
         }
-
-        //private GoogleSignInClientProxy _clientProxy;
     }
 }

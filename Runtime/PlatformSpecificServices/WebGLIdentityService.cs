@@ -12,7 +12,6 @@ namespace Izhguzin.GoogleIdentity
         [MonoPInvokeCallback(typeof(Action<string>))]
         private static void OnRequestSuccess(string code)
         {
-            Debug.Log(1);
             _onRequestSuccessCallback?.Invoke(code);
 
             _onRequestSuccessCallback = null;
@@ -78,18 +77,7 @@ namespace Izhguzin.GoogleIdentity
             _onInitErrorCallback = s => tcs.SetException(
                 new Exception(s));
 
-            Debug.LogWarning(Options.ClientId);
-
-            if (string.IsNullOrEmpty(Options.ClientId))
-            {
-                tcs.SetException(new NullReferenceException(
-                    $"Client Id is not set in {nameof(GoogleAuthOptions)}."));
-                return tcs.Task;
-            }
-
-            string clientId = Options.ClientId;
-
-            InitializeGisCodeClient(OnInit, clientId,
+            InitializeGisCodeClient(OnInit, Options.ClientId,
                 string.Join(' ', Options.Scopes),
                 OnRequestSuccess, OnRequestError);
 

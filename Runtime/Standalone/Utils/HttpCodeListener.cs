@@ -63,11 +63,13 @@ namespace Izhguzin.GoogleIdentity.Standalone
                 throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
                     $"OAuth authorization error: {query.Get("error")}.");
 
-            query.Get("code").ThrowIfNull(new AuthorizationFailedException(CommonErrorCodes.ResponseError,
-                "Malformed authorization response. Code value is null."));
+            if (query.Get("code").IsNullOrEmpty())
+                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
+                    "Malformed authorization response. Code value is null.");
 
-            query.Get("state").ThrowIfNull(new AuthorizationFailedException(CommonErrorCodes.ResponseError,
-                "Malformed authorization response. State value is null"));
+            if (query.Get("state").IsNullOrEmpty())
+                throw new AuthorizationFailedException(CommonErrorCodes.ResponseError,
+                    "Malformed authorization response. State value is null");
         }
 
         /// <exception cref="RequestFailedException"></exception>
@@ -88,7 +90,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
                 _httpListener.Stop();
                 return code;
             }
-            catch (RequestFailedException)
+            catch (AuthorizationFailedException)
             {
                 _httpListener.Stop();
                 throw;

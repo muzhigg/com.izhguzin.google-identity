@@ -10,14 +10,11 @@ namespace Izhguzin.GoogleIdentity.Standalone
     // https://developers.google.com/identity/openid-connect/openid-connect#prompt
     internal class AuthorizationRequestUrl : RequestUrl
     {
-        /// <exception cref="NullReferenceException"></exception>
-        public static AuthorizationRequestUrl CreateDefaultWithOptions(GoogleAuthOptions options)
+        public static AuthorizationRequestUrl CreateDefaultFromOptions(GoogleAuthOptions options)
         {
             AuthorizationRequestUrl requestUrl = new()
             {
-                ClientId = options.ClientId.ThrowIfNull(
-                    new NullReferenceException(
-                        $"Client ID not set in {typeof(GoogleAuthOptions)}.")),
+                ClientId    = options.ClientId,
                 RedirectUri = $"http://{IPAddress.Loopback}:{GetAvailablePort(options)}/",
                 Scope       = string.Join(' ', options.Scopes),
                 State       = PKCECodeProvider.GetRandomBase64URL(32)
@@ -75,24 +72,12 @@ namespace Izhguzin.GoogleIdentity.Standalone
 
         #region Fileds and Properties
 
-        /// <summary>
-        ///     If the value is code, launches a Basic authorization code flow,
-        ///     requiring a POST to the token endpoint to obtain the tokens.
-        ///     If the value is token id_token or id_token token, launches an Implicit flow,
-        ///     requiring the use of JavaScript at the redirect URI to retrieve tokens
-        ///     from the URI #fragment identifier.
-        /// </summary>
         [RequestParameter("response_type", true)]
-        public string ResponseType { get; set; } // set "code" to AuthCodeFlow, set "token id_token" to jwt
+        public string ResponseType { get; set; }
 
         [RequestParameter("nonce", false)] public string Nonce { get; set; }
 
-        /// <summary>
-        ///     The client ID string that you obtain from the API Console Credentials page,
-        ///     as described in Obtain OAuth 2.0 credentials.
-        /// </summary>
-        [RequestParameter("client_id", true)]
-        public string ClientId { get; set; }
+        [RequestParameter("client_id", true)] public string ClientId { get; set; }
 
         [RequestParameter("redirect_uri", true)]
         public string RedirectUri { get; set; }
