@@ -15,6 +15,11 @@ namespace Izhguzin.GoogleIdentity
         [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         public override Task<TokenResponse> Authorize()
         {
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
+
             GoogleSignInClientProxy clientProxy = GoogleSignInClientProxy.GetInstance();
             clientProxy.SignOut();
 
@@ -23,10 +28,24 @@ namespace Izhguzin.GoogleIdentity
             clientProxy.SignIn(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
                 UnityMainThread.RunOnMainThread(() => PerformCodeExchangeRequestAsync(listener, completionSource))));
 
+            InProgress = false;
             return completionSource.Task;
         }
 
         internal override Task InitializeAsync()
+        {
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
+
+            InitializeAndroidGoogle();
+
+            InProgress = false;
+            return Task.CompletedTask;
+        }
+
+        private void InitializeAndroidGoogle()
         {
             GoogleSignInClientProxy clientProxy = GoogleSignInClientProxy.GetInstance();
 
@@ -47,8 +66,6 @@ namespace Izhguzin.GoogleIdentity
             clientProxy.InitOptions(optionsBuilder.Build());
 
             foreach (Scope scope in scopes) scope.Dispose();
-
-            return Task.CompletedTask;
         }
 
         [SuppressMessage("ReSharper", "PossibleNullReferenceException")]

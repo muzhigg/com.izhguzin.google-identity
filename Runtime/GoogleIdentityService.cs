@@ -87,6 +87,8 @@ namespace Izhguzin.GoogleIdentity
 
         protected GoogleAuthOptions Options { get; }
 
+        protected bool InProgress { get; set; }
+
         #endregion
 
         protected GoogleIdentityService(GoogleAuthOptions options)
@@ -98,21 +100,23 @@ namespace Izhguzin.GoogleIdentity
 
         public async Task<TokenResponse> GetCachedTokenAsync(string userId)
         {
-            if (Options.TokenStorage == null)
-            {
-                Debug.LogWarning("To get a cached token, you must first set the storage to GoogleAuthOptions.");
-                return null;
-            }
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
 
-            string tokenJson = await Options.TokenStorage.LoadTokenAsync(userId);
+            InProgress = true;
 
-            if (string.IsNullOrEmpty(tokenJson))
-            {
-                Debug.LogWarning("TokenStorage did not return a json string.");
-                return null;
-            }
+            ITokenStorage tokenStorage = Options.TokenStorage;
+            if (tokenStorage == null)
+                throw new NullReferenceException(
+                    "To get a cached token, you must first set the storage to GoogleAuthOptions.");
+
+            string tokenJson = await tokenStorage.LoadTokenAsync(userId);
+
+            if (string.IsNullOrEmpty(tokenJson)) return null;
 
             TokenResponse response = TokenResponse.FromJson(tokenJson);
+
+            InProgress = false;
             return response;
         }
 
@@ -155,6 +159,11 @@ namespace Izhguzin.GoogleIdentity
 
         internal async Task RefreshTokenAsync(TokenResponse token)
         {
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
+
             RefreshTokenRequestUrl requestUrl = new()
             {
                 RefreshToken = token.RefreshToken,
@@ -175,26 +184,41 @@ namespace Izhguzin.GoogleIdentity
                 throw new RequestFailedException(CommonErrorCodes.DeserializationError,
                     $"Deserialization error: {exception.Message}");
             }
+            finally
+            {
+                InProgress = false;
+            }
         }
 
         internal async Task RevokeAccessAsync(TokenResponse token)
         {
-            if (token.IsEffectivelyExpired()) await token.RefreshTokenAsync();
+            if (token.IsEffectivelyExpired() && InProgress == false) await token.RefreshTokenAsync();
+
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
 
             RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
 
             using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
             await webRequest.SendWebRequest();
             CheckResponseForErrors(webRequest, "Revoke access");
+
+            InProgress = false;
         }
 
         internal async Task<bool> CacheTokenAsync(string userId, TokenResponse tokenResponse)
         {
-            if (Options.TokenStorage == null)
-            {
-                Debug.LogWarning("To cache a token, you must first set the storage to GoogleAuthOptions.");
-                return false;
-            }
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
+
+            ITokenStorage tokenStorage = Options.TokenStorage;
+            if (tokenStorage == null)
+                throw new NullReferenceException(
+                    "To cache a token, you must first set the storage to GoogleAuthOptions.");
 
             if (string.IsNullOrEmpty(tokenResponse.RefreshToken))
             {
@@ -202,8 +226,9 @@ namespace Izhguzin.GoogleIdentity
                 return false;
             }
 
-            await Options.TokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
-            return true;
+            bool result = await tokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
+            InProgress = false;
+            return result;
         }
 
         private void RefreshTokenProperties(TokenResponse tokenResponse, string json)

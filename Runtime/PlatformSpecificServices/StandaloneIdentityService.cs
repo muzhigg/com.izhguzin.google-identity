@@ -11,6 +11,11 @@ namespace Izhguzin.GoogleIdentity
 
         public override async Task<TokenResponse> Authorize()
         {
+            if (InProgress)
+                throw new InvalidOperationException(
+                    "An operation is already in progress.");
+
+            InProgress = true;
             AuthorizationRequestUrl requestUrl = GetAuthorizationRequestUrl();
             HttpCodeListener        listener   = new(requestUrl.RedirectUri, Options.ResponseHtml);
 
@@ -28,6 +33,7 @@ namespace Izhguzin.GoogleIdentity
             TokenResponse result =
                 await SendCodeExchangeRequestAsync(code, requestUrl.ProofCodeKey.codeVerifier, requestUrl.RedirectUri);
 
+            InProgress = false;
             return result;
         }
 

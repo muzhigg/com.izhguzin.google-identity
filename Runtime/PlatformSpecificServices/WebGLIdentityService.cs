@@ -3,7 +3,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using AOT;
-using UnityEngine;
+
+#pragma warning disable CS4014
 
 namespace Izhguzin.GoogleIdentity
 {
@@ -58,9 +59,14 @@ namespace Izhguzin.GoogleIdentity
 
         public override Task<TokenResponse> Authorize()
         {
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
+
             TaskCompletionSource<TokenResponse> taskCompletionSource = new();
 
-            _onRequestSuccessCallback = code => PerformCodeExchange(code, taskCompletionSource);
+            _onRequestSuccessCallback = code => PerformCodeExchangeAsync(code, taskCompletionSource);
             _onRequestErrorCallback =
                 type => SetException(type, taskCompletionSource);
 
@@ -71,11 +77,24 @@ namespace Izhguzin.GoogleIdentity
 
         internal override Task InitializeAsync()
         {
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+
+            InProgress = true;
+
             TaskCompletionSource<string> tcs = new();
 
-            _onInitSuccessCallback = () => tcs.SetResult(null);
-            _onInitErrorCallback = s => tcs.SetException(
-                new Exception(s));
+            _onInitSuccessCallback = () =>
+            {
+                InProgress = false;
+                tcs.SetResult(null);
+            };
+            _onInitErrorCallback = s =>
+            {
+                InProgress = false;
+                tcs.SetException(
+                    new Exception(s));
+            };
 
             InitializeGisCodeClient(OnInit, Options.ClientId,
                 string.Join(' ', Options.Scopes),
@@ -93,21 +112,24 @@ namespace Izhguzin.GoogleIdentity
                         "Failed to open popup window."));
                     break;
                 case "popup_closed":
-                    taskCompletionSource.SetException(new AuthorizationFailedException(CommonErrorCodes.Canceled,
+                    taskCompletionSource.SetException(new AuthorizationFailedException(CommonErrorCodes.SignInCancelled,
                         "Popup window closed"));
                     break;
-                case "access_denied":
-                    taskCompletionSource.SetException(
-                        new AuthorizationFailedException(CommonErrorCodes.ResolutionRequired, ""));
-                    break;
+                //case "access_denied":
+                //    taskCompletionSource.SetException(
+                //        new AuthorizationFailedException(CommonErrorCodes.ResolutionRequired, ""));
+                //    break;
                 default:
                     taskCompletionSource.SetException(new AuthorizationFailedException(CommonErrorCodes.Error,
                         "There was an error during authorization. Details in the browser console."));
                     break;
             }
+
+            InProgress = false;
         }
 
-        private async Task PerformCodeExchange(string code, TaskCompletionSource<TokenResponse> taskCompletionSource)
+        private async Task PerformCodeExchangeAsync(string code,
+            TaskCompletionSource<TokenResponse>            taskCompletionSource)
         {
             try
             {
@@ -117,6 +139,10 @@ namespace Izhguzin.GoogleIdentity
             catch (Exception exception)
             {
                 taskCompletionSource.SetException(exception);
+            }
+            finally
+            {
+                InProgress = false;
             }
         }
     }
