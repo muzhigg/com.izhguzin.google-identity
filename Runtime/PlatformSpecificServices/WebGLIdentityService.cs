@@ -1,4 +1,4 @@
-﻿#if UNITY_WEBGL
+﻿#if UNITY_WEBGL && !UNITY_EDITOR
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -16,14 +16,14 @@ namespace Izhguzin.GoogleIdentity
             _onRequestSuccessCallback?.Invoke(code);
 
             _onRequestSuccessCallback = null;
-            _onRequestErrorCallback   = null;
+            _onRequestErrorCallback = null;
         }
 
         [MonoPInvokeCallback(typeof(Action<string>))]
         private static void OnRequestError(string error)
         {
             _onRequestErrorCallback?.Invoke(error);
-            _onRequestErrorCallback   = null;
+            _onRequestErrorCallback = null;
             _onRequestSuccessCallback = null;
         }
 
@@ -47,7 +47,7 @@ namespace Izhguzin.GoogleIdentity
                 _onInitErrorCallback?.Invoke(error);
 
             _onInitSuccessCallback = null;
-            _onInitErrorCallback   = null;
+            _onInitErrorCallback = null;
         }
 
         private static Action         _onInitSuccessCallback;

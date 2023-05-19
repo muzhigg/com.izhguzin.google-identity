@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Android;
 using Izhguzin.GoogleIdentity.Utils;
@@ -9,21 +10,17 @@ namespace Izhguzin.GoogleIdentity
 {
     internal class AndroidIdentityService : GoogleIdentityService
     {
-        #region Fileds and Properties
-
-        private GoogleSignInClientProxy _clientProxy;
-
-        #endregion
-
         public AndroidIdentityService(GoogleAuthOptions options) : base(options) { }
 
+        [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         public override Task<TokenResponse> Authorize()
         {
-            _clientProxy.SignOut();
+            GoogleSignInClientProxy clientProxy = GoogleSignInClientProxy.GetInstance();
+            clientProxy.SignOut();
 
             TaskCompletionSource<TokenResponse> completionSource = new();
 
-            _clientProxy.SignIn(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
+            clientProxy.SignIn(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
                 UnityMainThread.RunOnMainThread(() => PerformCodeExchangeRequestAsync(listener, completionSource))));
 
             return completionSource.Task;
@@ -31,12 +28,11 @@ namespace Izhguzin.GoogleIdentity
 
         internal override Task InitializeAsync()
         {
-            _clientProxy = GsiAppCompatActivity.ClientProxy;
+            GoogleSignInClientProxy clientProxy = GoogleSignInClientProxy.GetInstance();
 
-            if (_clientProxy == null)
+            if (clientProxy == null)
                 throw new NullReferenceException(
-                    "The current Android Activity must be GsiAppCompatActivity " +
-                    "or inherited from it.");
+                    "The current Android activity should initialize GoogleSignInClientProxy.");
 
             using GoogleSignInOptions.Builder optionsBuilder =
                 new(GoogleSignInOptions.DefaultSignIn);
@@ -50,13 +46,14 @@ namespace Izhguzin.GoogleIdentity
             for (int i = 0; i < scopes.Length; i++) scopes[i] = new Scope(Options.Scopes[i]);
 
             optionsBuilder.RequestScopes(scopes);
-            _clientProxy.InitOptions(optionsBuilder.Build());
+            clientProxy.InitOptions(optionsBuilder.Build());
 
             foreach (Scope scope in scopes) scope.Dispose();
 
             return Task.CompletedTask;
         }
 
+        [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         private async Task PerformCodeExchangeRequestAsync(GoogleSignInClientProxy.OnTaskCompleteListener listener,
             TaskCompletionSource<TokenResponse> completionSource)
         {
@@ -65,7 +62,7 @@ namespace Izhguzin.GoogleIdentity
                 {
                     TokenResponse result =
                         await SendCodeExchangeRequestAsync(listener.Code, null, "");
-                    _clientProxy.SignOut();
+                    GoogleSignInClientProxy.GetInstance().SignOut();
                     completionSource.SetResult(result);
                 }
                 catch (Exception ex)
@@ -78,5 +75,7 @@ namespace Izhguzin.GoogleIdentity
 
             listener.javaInterface.Dispose();
         }
+
+        //private GoogleSignInClientProxy _clientProxy;
     }
 }

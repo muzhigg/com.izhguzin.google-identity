@@ -1,11 +1,21 @@
 ﻿using System;
 using System.Threading;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Android
 {
     internal class GoogleSignInClientProxy : AndroidJavaObjectWrapper
     {
+        [CanBeNull]
+        public static GoogleSignInClientProxy GetInstance()
+        {
+            using AndroidJavaClass javaClass  = new("com.izhguzin.gsi.GoogleSignInClientProxy");
+            AndroidJavaObject      javaObject = javaClass.CallStatic<AndroidJavaObject>("getInstance");
+
+            return javaObject == null ? null : new GoogleSignInClientProxy(javaObject);
+        }
+
         public class OnTaskCompleteListener : AndroidJavaProxy
         {
             #region Fileds and Properties

@@ -26,31 +26,6 @@ const library = {
 			clientScript.src = 'https://accounts.google.com/gsi/client';
 		},
 
-		googleIdentityServiceInitializeImplicitClient: function (initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr) {
-				
-			googleIdentityService.googleIdentityServiceInitializeScript((err) => {
-				dynCall('vi', initCallbackPtr, [googleIdentityService.allocateUnmanagedString(err)]);
-			}, () => {
-				try {
-                    googleIdentityService.client = google.accounts.oauth2.initTokenClient({
-                        client_id: UTF8ToString(clientIdStr),
-                        scope: UTF8ToString(scopeStr),
-                        callback: (response) => {
-                            // dynCall('vi', callbackPtr, googleIdentityService.allocateUnmanagedString(response));
-                        },
-                        error_callback: (error) => {
-                            // dynCall('vi', errorCallbackPtr, googleIdentityService.allocateUnmanagedString(error));
-                        },
-                    });
-    
-                    googleIdentityService.isInitialized = true;
-                    dynCall('vi', initCallbackPtr, [googleIdentityService.allocateUnmanagedString('')]);
-                } catch (error) {
-                    dynCall('vi', initCallbackPtr, [googleIdentityService.allocateUnmanagedString('[WEB GIS ERROR] ' + error.message)]);
-                }
-            });
-		},
-
 		googleIdentityServiceInitializeCodeClient: function (initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr) {
 			googleIdentityService.googleIdentityServiceInitializeScript((err) => {
 				dynCall('vi', initCallbackPtr, [googleIdentityService.allocateUnmanagedString(err)]);
@@ -61,7 +36,14 @@ const library = {
                         scope: scopeStr,
                         ux_mode: 'popup',
                         callback: (response) => {
-							dynCall('vi', callbackPtr, [googleIdentityService.allocateUnmanagedString(response.code)]);
+							if (response.error) {
+								dynCall('vi', errorCallbackPtr, [googleIdentityService.allocateUnmanagedString(response.error)]);
+							} 
+							else if (response.code) {
+								dynCall('vi', callbackPtr, [googleIdentityService.allocateUnmanagedString(response.code)]);
+							}
+
+							
 						},
                         error_callback: (error) => {
 							dynCall('vi', errorCallbackPtr, [googleIdentityService.allocateUnmanagedString(error.type)]);
@@ -88,10 +70,6 @@ const library = {
 		},
 	},
 
-    InitializeGisImplicitClient: function (initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr) {
-        googleIdentityService.googleIdentityServiceInitializeImplicitClient(initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr);
-    },
-
 	InitializeGisCodeClient: function (initCallbackPtr, clientIdStr, scopeStr, callbackPtr, errorCallbackPtr) {
 		googleIdentityService.googleIdentityServiceInitializeCodeClient(initCallbackPtr, UTF8ToString(clientIdStr), UTF8ToString(scopeStr), callbackPtr, errorCallbackPtr);
 	},
@@ -116,13 +94,10 @@ const library = {
 
         }
 
-       
-
         var bufferSize = lengthBytesUTF8(returnStr) + 1;
         var buffer = _malloc(bufferSize);
         stringToUTF8(returnStr, buffer, bufferSize);
         return buffer;
-
     }
 }
 
