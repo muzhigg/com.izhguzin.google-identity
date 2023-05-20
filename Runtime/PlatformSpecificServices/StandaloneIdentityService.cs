@@ -11,10 +11,7 @@ namespace Izhguzin.GoogleIdentity
 
         public override async Task<TokenResponse> Authorize()
         {
-            if (InProgress)
-                throw new InvalidOperationException(
-                    "An operation is already in progress.");
-
+            ValidateInProgress();
             InProgress = true;
 
             try

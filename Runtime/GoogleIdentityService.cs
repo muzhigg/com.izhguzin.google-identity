@@ -100,9 +100,7 @@ namespace Izhguzin.GoogleIdentity
 
         public async Task<TokenResponse> GetCachedTokenAsync(string userId)
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
             ITokenStorage tokenStorage = Options.TokenStorage;
@@ -155,13 +153,17 @@ namespace Izhguzin.GoogleIdentity
             }
         }
 
+        protected void ValidateInProgress()
+        {
+            if (InProgress)
+                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
+        }
+
         internal abstract Task InitializeAsync();
 
         internal async Task RefreshTokenAsync(TokenResponse token)
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
             RefreshTokenRequestUrl requestUrl = new()
@@ -194,9 +196,7 @@ namespace Izhguzin.GoogleIdentity
         {
             if (token.IsEffectivelyExpired() && InProgress == false) await token.RefreshTokenAsync();
 
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
             RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
@@ -210,25 +210,45 @@ namespace Izhguzin.GoogleIdentity
 
         internal async Task<bool> CacheTokenAsync(string userId, TokenResponse tokenResponse)
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
+            try
+            {
+                ITokenStorage tokenStorage = GetTokenStorage();
+
+                if (!IsTokenValid(tokenResponse))
+                    return false;
+
+                bool result =
+                    await tokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
+                return result;
+            }
+            finally
+            {
+                InProgress = false;
+            }
+        }
+
+        private ITokenStorage GetTokenStorage()
+        {
             ITokenStorage tokenStorage = Options.TokenStorage;
             if (tokenStorage == null)
                 throw new NullReferenceException(
                     "To cache a token, you must first set the storage to GoogleAuthOptions.");
 
+            return tokenStorage;
+        }
+
+        private bool IsTokenValid(TokenResponse tokenResponse)
+        {
             if (string.IsNullOrEmpty(tokenResponse.RefreshToken))
             {
                 Debug.LogWarning("TokenResponse does not contain RefreshToken. There is no point in caching.");
                 return false;
             }
 
-            bool result = await tokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
-            InProgress = false;
-            return result;
+            return true;
         }
 
         private void RefreshTokenProperties(TokenResponse tokenResponse, string json)
@@ -267,7 +287,7 @@ namespace Izhguzin.GoogleIdentity
                 ErrorResponse errorResponse =
                     StringSerializationAPI.Deserialize<ErrorResponse>(tokenRequest.downloadHandler.text);
                 exception = new RequestFailedException(CommonErrorCodes.ResponseError,
-                    $"{method} request failed with error ({errorResponse.ErrorDescription})");
+                    $"[{errorResponse.Error}] {method} request failed with error ({errorResponse.ErrorDescription})");
             }
             catch (Exception)
             {

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Standalone
 {
@@ -55,15 +54,7 @@ namespace Izhguzin.GoogleIdentity.Standalone
                 if (ports.Contains(activeTcpListener.Port))
                     ports.Remove(activeTcpListener.Port);
 
-            if (ports.Count != 0)
-            {
-                Debug.Log(ports.First());
-                return ports.First();
-            }
-
-            //if (IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners()
-            //    .All(endPoint => !readOnlyCollection.Contains(endPoint.Port)))
-            //    return readOnlyCollection.First();
+            if (ports.Count != 0) return ports.First();
 
             throw new NotSupportedException("All specified TCP ports are already busy.");
         }

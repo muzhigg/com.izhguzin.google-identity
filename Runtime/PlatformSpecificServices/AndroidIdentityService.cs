@@ -15,9 +15,7 @@ namespace Izhguzin.GoogleIdentity
         [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         public override Task<TokenResponse> Authorize()
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
             GoogleSignInClientProxy clientProxy = GoogleSignInClientProxy.GetInstance();
@@ -28,20 +26,23 @@ namespace Izhguzin.GoogleIdentity
             clientProxy.SignIn(new GoogleSignInClientProxy.OnTaskCompleteListener(listener =>
                 UnityMainThread.RunOnMainThread(() => PerformCodeExchangeRequestAsync(listener, completionSource))));
 
-            InProgress = false;
             return completionSource.Task;
         }
 
         internal override Task InitializeAsync()
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
-            InitializeAndroidGoogle();
+            try
+            {
+                InitializeAndroidGoogle();
+            }
+            finally
+            {
+                InProgress = false;
+            }
 
-            InProgress = false;
             return Task.CompletedTask;
         }
 
@@ -86,9 +87,10 @@ namespace Izhguzin.GoogleIdentity
                 }
             else
                 completionSource.SetException(new AuthorizationFailedException(listener.StatusCode,
-                    $"An error occurred during authorization: {listener.Error}"));
+                    $"An error occurred during authorization: ({listener.StatusCode}) {listener.Error}"));
 
             listener.javaInterface.Dispose();
+            InProgress = false;
         }
     }
 }

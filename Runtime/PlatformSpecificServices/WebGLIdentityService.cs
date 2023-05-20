@@ -59,9 +59,7 @@ namespace Izhguzin.GoogleIdentity
 
         public override Task<TokenResponse> Authorize()
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
             TaskCompletionSource<TokenResponse> taskCompletionSource = new();
@@ -77,9 +75,7 @@ namespace Izhguzin.GoogleIdentity
 
         internal override Task InitializeAsync()
         {
-            if (InProgress)
-                throw new InvalidOperationException("GoogleIdentityService is already executing the request.");
-
+            ValidateInProgress();
             InProgress = true;
 
             TaskCompletionSource<string> tcs = new();
