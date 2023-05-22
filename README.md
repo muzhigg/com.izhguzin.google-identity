@@ -4,10 +4,10 @@ The Google Identity Package provides a convenient way to integrate Google Identi
 
 # Features
 
-⋅⋅*Seamless integration with Google Identity and OAuth 2.0.
-⋅⋅*Supports Standalone, Android and WebGL platforms.
-⋅⋅*Simplifies the authorization process and token management.
-⋅⋅*Customizable HTML response page after completing authorization.
+*Seamless integration with Google Identity and OAuth 2.0.
+*Supports Standalone, Android and WebGL platforms.
+*Simplifies the authorization process and token management.
+*Customizable HTML response page after completing authorization.
 
 # Installation
 
@@ -53,4 +53,41 @@ public class ExampleScript : MonoBehaviour
         }
     }
 }
+```
+
+Then open the Credentials page in the Google Cloud console. And open your OAuth 2.0 Client ID for editing. In the "Authorized redirect URIs" section, specify your URIs in the format "http://127.0.0.1:{your-port}/"
+
+## Android
+
+Requirements:
+A compatible Android device that runs Android 4.4 or newer and includes the Google Play Store or an emulator with an AVD that runs the Google APIs platform based on Android 4.2.2 or newer and has Google Play services version 15.0.0 or newer.
+
+The package uses the Google Sign In library on Android devices. To use the Google Identity package, you need to follow these steps:
+
+1. Download and import the External Dependency Manager for Unity plugin into your project. https://github.com/googlesamples/unity-jar-resolver/tags
+2. Sign your application with your key in the project settings.
+3. In the project settings, select "Custom Main Manifest", "Custom Main Gradle Template", and "Custom Gradle Properties Template".
+4. Open gradleTemplate.properties in a text editor and remove the line "android.enableR8=MINIFY_WITH_R_EIGHT".
+5. Resolve Android dependencies (Assets -> External Dependency Manager -> Android Resolver -> Resolve).
+6. You also need to edit AndroidManifest.xml. If you do not plan to use your own activity, replace the following lines.
+```
+<activity android:name="com.unity3d.player.UnityPlayerActivity"
+                  android:theme="@style/UnityThemeSelector">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+        </activity>
+```
+
+```
+<activity android:name="com.izhguzin.gsi.GsiAppCompatActivity"
+                  android:theme="@style/UnityAppCompatThemeSelector">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+        </activity>
 ```
