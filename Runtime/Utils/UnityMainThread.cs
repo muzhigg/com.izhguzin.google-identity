@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Izhguzin.GoogleIdentity.UnityMainThreadDispatcher;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Izhguzin.GoogleIdentity.Utils
 {
@@ -26,7 +27,7 @@ namespace Izhguzin.GoogleIdentity.Utils
             Dispatcher.Enqueue(action);
         }
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod, Preserve]
         private static void Init()
         {
             _mainThread = Thread.CurrentThread;

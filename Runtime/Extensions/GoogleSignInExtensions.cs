@@ -3,21 +3,11 @@ using UnityEngine.Networking;
 
 namespace Izhguzin.GoogleIdentity
 {
-    public static class GoogleSignInExtensions
+    internal static class GoogleSignInExtensions
     {
-        public static SignInAsyncOperationAwaiter GetAwaiter(this GoogleRequestAsyncOperation asyncOp)
+        internal static string ThrowIfNull(this string value, string exceptionMessage)
         {
-            return new SignInAsyncOperationAwaiter(asyncOp);
-        }
-
-        internal static bool IsNull(this string s)
-        {
-            return s == null;
-        }
-
-        internal static string ThrowIfNull(this string value, Exception exception)
-        {
-            if (value == null) throw exception;
+            if (value == null) throw new NullReferenceException(exceptionMessage);
 
             return value;
         }
@@ -27,9 +17,9 @@ namespace Izhguzin.GoogleIdentity
             return string.IsNullOrEmpty(s);
         }
 
-        internal static string ThrowIfNullOrEmpty(this string value, Exception exception)
+        internal static string ThrowIfNullOrEmpty(this string value, string exceptionMessage)
         {
-            if (string.IsNullOrEmpty(value)) throw exception;
+            if (string.IsNullOrEmpty(value)) throw new NullReferenceException(exceptionMessage);
 
             return value;
         }

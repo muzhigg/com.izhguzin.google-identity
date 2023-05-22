@@ -6,6 +6,13 @@ using Unity.VisualScripting.FullSerializer;
 
 namespace Izhguzin.GoogleIdentity
 {
+    /// <summary>
+    ///     This class represents a response to an authorization
+    ///     token request in the Google API. It contains information
+    ///     about the issued token, its expiration time, token type,
+    ///     scope, and other parameters. The class also includes methods
+    ///     for refreshing the token, revoking access, and caching the token.
+    /// </summary>
     [Serializable, fsObject]
     public sealed class TokenResponse
     {
@@ -58,16 +65,31 @@ namespace Izhguzin.GoogleIdentity
 
         [fsProperty("iss")] public DateTime IssuedUtc { get; internal set; }
 
+        /// <summary>
+        ///     Checks if the token has expired by comparing
+        ///     the current time with the token's expiration time.
+        ///     If the token has expired, the method returns true.
+        /// </summary>
         public bool IsExpired()
         {
             return IssuedUtc.AddSeconds(ExpiresInSeconds - TokenRefreshTimeWindowSeconds) <= DateTime.UtcNow;
         }
 
+        /// <summary>
+        ///     Checks if the token has effectively expired by
+        ///     comparing the current time plus a grace period
+        ///     with the token's expiration time. If the token
+        ///     has effectively expired, the method returns true.
+        /// </summary>
         public bool IsEffectivelyExpired()
         {
             return IssuedUtc.AddSeconds(ExpiresInSeconds - TokenHardExpiryTimeWindowSeconds) <= DateTime.UtcNow;
         }
 
+        /// <summary>
+        ///     Retrieves the user credentials associated with the token. It creates a new UserCredential object using the token's
+        ///     access token and the Google API's client secrets.
+        /// </summary>
         public UserCredential GetUserCredential()
         {
             if (string.IsNullOrEmpty(IdToken)) return null;
@@ -75,6 +97,11 @@ namespace Izhguzin.GoogleIdentity
             return Decoder.DecodePayload<UserCredential>(IdToken);
         }
 
+        /// <summary>
+        ///     Refreshes the token by sending a request to the Google OAuth2 server. It updates the current TokenResponse object
+        ///     with the new token information.
+        /// </summary>
+        /// <exception cref="RequestFailedException"></exception>
         public async Task RefreshTokenAsync()
         {
             if (string.IsNullOrEmpty(RefreshToken))
@@ -85,13 +112,22 @@ namespace Izhguzin.GoogleIdentity
                 .RefreshTokenAsync(this);
         }
 
+        /// <summary>
+        ///     Revokes the access token by sending a request
+        ///     to the Google OAuth2 server. It invalidates the token.
+        /// </summary>
         public async Task RevokeAccessAsync()
         {
             await GoogleIdentityService.Instance
                 .RevokeAccessAsync(this);
         }
 
-        public async Task<bool> CacheAsync(string userId)
+        /// <summary>
+        ///     Saves the token by storing it in the storage specified by the developer.
+        /// </summary>
+        /// <param name="userId">Unique user identifier, use this parameter as a key.</param>
+        /// <returns>It returns a boolean value indicating whether the token was successfully saved.</returns>
+        public async Task<bool> StoreAsync(string userId)
         {
             return await GoogleIdentityService.Instance.CacheTokenAsync(userId, this);
         }
@@ -103,7 +139,9 @@ namespace Izhguzin.GoogleIdentity
             {
                 TokenResponse response = StringSerializationAPI.Deserialize<TokenResponse>(json);
 
-                CheckProperties(response);
+                if (string.IsNullOrEmpty(response.AccessToken))
+                    throw new NullReferenceException(
+                        "The response from the server is not complete. AccessToken have a null value.");
 
                 return response;
             }
@@ -116,15 +154,6 @@ namespace Izhguzin.GoogleIdentity
         internal string ToJson()
         {
             return StringSerializationAPI.Serialize(this);
-        }
-
-        private static void CheckProperties(TokenResponse response)
-        {
-            NullReferenceException exception =
-                new("The response from the server is not complete. Some properties have a null value.");
-
-            response.AccessToken.ThrowIfNullOrEmpty(exception);
-            response.IdToken.ThrowIfNullOrEmpty(exception);
         }
     }
 }

@@ -4,12 +4,6 @@ using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Android
 {
-    internal class Scope : AndroidJavaObjectWrapper
-    {
-        public Scope(string scopeUri) : base(new AndroidJavaObject(
-            "com.google.android.gms.common.api.Scope", scopeUri)) { }
-    }
-
     internal class GoogleSignInOptions : AndroidJavaObjectWrapper
     {
         internal class Builder : AndroidJavaObjectWrapper
@@ -23,40 +17,6 @@ namespace Izhguzin.GoogleIdentity.Android
             {
                 return new GoogleSignInOptions(
                     androidJavaObject.Call<AndroidJavaObject>("build"));
-            }
-
-            public Builder RequestEmail()
-            {
-                using AndroidJavaObject _ =
-                    androidJavaObject.Call<AndroidJavaObject>("requestEmail");
-
-                return this;
-            }
-
-            public Builder RequestId()
-            {
-                using AndroidJavaObject _ =
-                    androidJavaObject.Call<AndroidJavaObject>("requestId");
-
-                return this;
-            }
-
-            public Builder RequestIdToken(string serverClientId)
-            {
-                using AndroidJavaObject _ =
-                    androidJavaObject.Call<AndroidJavaObject>(
-                        "requestIdToken", serverClientId);
-
-                return this;
-            }
-
-            public Builder RequestProfile()
-            {
-                using AndroidJavaObject _ =
-                    androidJavaObject.Call<AndroidJavaObject>(
-                        "requestProfile");
-
-                return this;
             }
 
             public Builder RequestScopes(params Scope[] scopes)
@@ -97,24 +57,6 @@ namespace Izhguzin.GoogleIdentity.Android
                 using AndroidJavaObject _ =
                     androidJavaObject.Call<AndroidJavaObject>(
                         "requestServerAuthCode", serverClientId);
-
-                return this;
-            }
-
-            public Builder RequestServerAuthCode(string serverClientId, bool forceCodeForRefreshToken)
-            {
-                using AndroidJavaObject _ =
-                    androidJavaObject.Call<AndroidJavaObject>(
-                        "requestServerAuthCode", serverClientId, forceCodeForRefreshToken);
-
-                return this;
-            }
-
-            public Builder SetAccountName(string accountName)
-            {
-                using AndroidJavaObject _ =
-                    androidJavaObject.Call<AndroidJavaObject>(
-                        "setAccountName", accountName);
 
                 return this;
             }

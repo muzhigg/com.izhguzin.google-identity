@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
-using Izhguzin.GoogleIdentity.Standalone;
+using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity
@@ -56,12 +57,18 @@ namespace Izhguzin.GoogleIdentity
         {
             try
             {
-                AuthorizationRequestUrl result = AuthorizationRequestUrl
-                    .CreateDefaultFromOptions(Options);
-                result.ResponseType = "code";
-                result.AccessType   = "offline";
-                result.Prompt       = "consent";
-                result.ProofCodeKey = new AuthorizationRequestUrl.ProofKey(true);
+                AuthorizationRequestUrl result = new()
+                {
+                    ClientId = Options.ClientId,
+                    RedirectUri =
+                        $"http://{IPAddress.Loopback}:{TcpPortProvider.GetAvailablePortFromCollection(Options.Ports)}/",
+                    Scope        = string.Join(' ', Options.Scopes),
+                    State        = PKCECodeProvider.GetRandomBase64URL(32),
+                    ResponseType = "code",
+                    AccessType   = "offline",
+                    Prompt       = "consent",
+                    ProofCodeKey = new AuthorizationRequestUrl.ProofKey(true)
+                };
 
                 return result;
             }

@@ -2,17 +2,9 @@ using System;
 
 namespace Izhguzin.GoogleIdentity
 {
-    public class AuthorizationFailedException : RequestFailedException
-    {
-        internal new static AuthorizationFailedException Create(int errorCode, Exception exception)
-        {
-            return new AuthorizationFailedException(errorCode,
-                $"An error occurred during authorization: ({exception.GetType().Name}) {exception.Message}");
-        }
-
-        public AuthorizationFailedException(int errorCode, string message) : base(errorCode, message) { }
-    }
-
+    /// <summary>
+    ///     The RequestFailedException class represents an exception that occurs when a request to Google Identity fails.
+    /// </summary>
     public class RequestFailedException : Exception
     {
         internal static RequestFailedException Create(int errorCode, Exception exception)
@@ -22,22 +14,15 @@ namespace Izhguzin.GoogleIdentity
 
         #region Fileds and Properties
 
+        /// <summary>
+        ///     Represents the error code associated with the exception.
+        ///     The error code can be compared with the constants defined
+        ///     in the <see cref="CommonErrorCodes" /> and <see cref="AndroidCommonErrorCodes" /> classes for further error code
+        ///     analysis and handling.
+        /// </summary>
         public int ErrorCode { get; }
 
-        public CommonStatus CommonStatus { get; }
-
         #endregion
-
-        [Obsolete]
-        public RequestFailedException(CommonStatus commonStatus, string message) : base(message)
-        {
-            CommonStatus = commonStatus;
-        }
-
-        [Obsolete]
-        public RequestFailedException(CommonStatus commonStatus, string message, Exception innerException) : base(
-            message,
-            innerException) { }
 
         public RequestFailedException(int errorCode, string message) : base(message)
         {

@@ -1,16 +1,11 @@
 using System;
-using System.Text;
 using System.Threading.Tasks;
-using Izhguzin.GoogleIdentity.Standalone;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Izhguzin.GoogleIdentity
 {
-    /// <summary>
-    ///     Entry class to the Authentication Service.
-    /// </summary>
     public abstract class GoogleIdentityService : IIdentityService
     {
         public static async Task InitializeAsync(GoogleAuthOptions options)
@@ -98,7 +93,7 @@ namespace Izhguzin.GoogleIdentity
 
         public abstract Task<TokenResponse> Authorize();
 
-        public async Task<TokenResponse> GetCachedTokenAsync(string userId)
+        public async Task<TokenResponse> LoadStoredTokenAsync(string userId)
         {
             ValidateInProgress();
             InProgress = true;
@@ -130,7 +125,7 @@ namespace Izhguzin.GoogleIdentity
                 CodeVerifier = codeVerifier
             };
 
-            using UnityWebRequest webRequest = CreatePostRequest(tokenRequestUrl);
+            using UnityWebRequest webRequest = tokenRequestUrl.CreatePostRequest();
             await webRequest.SendWebRequest();
 
             try
@@ -173,7 +168,7 @@ namespace Izhguzin.GoogleIdentity
                 ClientSecret = Options.ClientSecret
             };
 
-            using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
+            using UnityWebRequest webRequest = requestUrl.CreatePostRequest();
             await webRequest.SendWebRequest();
             CheckResponseForErrors(webRequest, "Refresh token");
 
@@ -201,7 +196,7 @@ namespace Izhguzin.GoogleIdentity
 
             RevokeAccessRequestUrl requestUrl = new(token.AccessToken);
 
-            using UnityWebRequest webRequest = CreatePostRequest(requestUrl);
+            using UnityWebRequest webRequest = requestUrl.CreatePostRequest();
             await webRequest.SendWebRequest();
             CheckResponseForErrors(webRequest, "Revoke access");
 
@@ -221,7 +216,7 @@ namespace Izhguzin.GoogleIdentity
                     return false;
 
                 bool result =
-                    await tokenStorage.SaveTokenAsync(userId, StringSerializationAPI.Serialize(tokenResponse));
+                    await tokenStorage.SaveTokenAsync(userId, tokenResponse.ToJson());
                 return result;
             }
             finally
@@ -260,20 +255,6 @@ namespace Izhguzin.GoogleIdentity
             tokenResponse.IssuedUtc        = newResponse.IssuedUtc;
             tokenResponse.Scope            = newResponse.Scope;
             tokenResponse.TokenType        = newResponse.TokenType;
-        }
-
-        private UnityWebRequest CreatePostRequest(RequestUrl url)
-        {
-            UnityWebRequest request = new(url.EndPointUrl, UnityWebRequest.kHttpVerbPOST)
-            {
-                uploadHandler = new UploadHandlerRaw(Encoding.ASCII.GetBytes(url.BuildBody()))
-                {
-                    contentType = "application/x-www-form-urlencoded"
-                },
-                downloadHandler = new DownloadHandlerBuffer()
-            };
-
-            return request;
         }
 
         private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)
