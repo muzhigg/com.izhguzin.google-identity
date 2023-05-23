@@ -2,8 +2,6 @@ using System;
 using Izhguzin.GoogleIdentity.JWTDecoder;
 using UnityEngine;
 
-//using Unity.VisualScripting.FullSerializer;
-
 namespace Izhguzin.GoogleIdentity
 {
     /// <summary>
@@ -12,7 +10,7 @@ namespace Izhguzin.GoogleIdentity
     ///     It contains various fields and properties that
     ///     store information about the user.
     /// </summary>
-    [Serializable /*, fsObject*/]
+    [Serializable]
     public sealed class UserCredential
     {
         internal UserCredential() { }
@@ -56,82 +54,69 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     Who created and signed this token.
         /// </summary>
-        //[fsProperty("iss")]
         public string Issuer => iss;
 
 
         /// <summary>
         ///     The party to which this token was issued.
         /// </summary>
-        //[fsProperty("azp")]
         public string AuthorizedParty => azp;
 
 
         /// <summary>
         ///     Who and what the token is intended for.
         /// </summary>
-        //[fsProperty("aud")]
         public string Audience => aud;
 
 
         /// <summary>
         ///     Whom the token refers to.
         /// </summary>
-        // [fsProperty("sub")]
         public string Subject => sub;
 
         /// <summary>
         ///     Represents the email address of the user.
         /// </summary>
-        //[fsProperty("email")]
         public string Email => email;
 
         /// <summary>
         ///     Indicates whether the user's email address has been verified.
         /// </summary>
-        //[fsProperty("email_verified")]
         public bool EmailVerified => email_verified;
 
         /// <summary>
         ///     Represents the name of the user.
         /// </summary>
-        //[fsProperty("name")]
         public string Name => name;
 
         /// <summary>
         ///     Represents the URL of the user's profile picture.
         /// </summary>
-        //[fsProperty("picture")]
         public string PictureUrl => picture;
 
         /// <summary>
         ///     Represents the given name (first name) of the user.
         /// </summary>
-        //[fsProperty("given_name")]
         public string GivenName => given_name;
 
         /// <summary>
         ///     Represents the family name (last name) of the user.
         /// </summary>
-        //[fsProperty("family_name")]
         public string FamilyName => family_name;
 
         /// <summary>
         ///     Represents the locale of the user.
         /// </summary>
-        //[fsProperty("locale")]
         public string Locale => locale;
 
         /// <summary>
         ///     Seconds since Unix epoch.
         /// </summary>
-        //[fsProperty("iat")]
         public long IssuedAt => iat;
 
         /// <summary>
         ///     Seconds since Unix epoch.
         /// </summary>
-        //[fsProperty("exp")]
         public long ExpirationTime => exp;
 
         internal TokenResponse Token { get; set; }

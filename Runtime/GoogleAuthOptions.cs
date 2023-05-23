@@ -3,8 +3,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 
-//using Unity.VisualScripting.FullSerializer;
-
 namespace Izhguzin.GoogleIdentity
 {
     /// <summary>
@@ -72,36 +70,6 @@ namespace Izhguzin.GoogleIdentity
 
                 return SetCredentials(clientId);
             }
-
-            ///// <summary>
-            /////     Sets the client ID and client secret by parsing the provided credentials. This method allows you to set the client
-            /////     ID and client secret by parsing a TextAsset object that contains the credential data in JSON format.
-            ///// </summary>
-            ///// <exception cref="NullReferenceException"></exception>
-            //public Builder SetCredentials(TextAsset credential)
-            //{
-            //    fsData                     data = fsJsonParser.Parse(credential.text);
-            //    Dictionary<string, fsData> dic  = data.AsDictionary;
-
-            //    if (dic.ContainsKey("web"))
-            //    {
-            //        Dictionary<string, fsData> webDic = dic["web"].AsDictionary;
-            //        return SetCredentials(webDic["client_id"].AsString,
-            //            webDic["client_secret"].AsString);
-            //    }
-
-            //    Dictionary<string, fsData> installedDic = dic["installed"]
-            //        .AsDictionary ?? throw new NullReferenceException(
-            //        "The credentials you provided do not contain the Client Id " +
-            //        "and Client Secret for web or installed app type.");
-
-            //    _options.ClientId = installedDic["client_id"].AsString
-            //        .ThrowIfNull("The credentials you provided do not contain the Client Id");
-
-            //    _options.ClientSecret = installedDic["client_secret"].AsString;
-
-            //    return this;
-            //}
 
             /// <summary>
             ///     Sets the token storage implementation to be used for storing and retrieving access tokens. This method allows you

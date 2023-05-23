@@ -4,8 +4,6 @@ using Izhguzin.GoogleIdentity.JWTDecoder;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 
-//using Unity.VisualScripting.FullSerializer;
-
 namespace Izhguzin.GoogleIdentity
 {
     /// <summary>
@@ -15,7 +13,7 @@ namespace Izhguzin.GoogleIdentity
     ///     scope, and other parameters. The class also includes methods
     ///     for refreshing the token, revoking access, and caching the token.
     /// </summary>
-    [Serializable /*, fsObject*/]
+    [Serializable]
     public sealed class TokenResponse
     {
         internal const int TokenRefreshTimeWindowSeconds    = 60 * 6;
@@ -43,7 +41,6 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     The access token issued by the authorization server.
         /// </summary>
-        //[fsProperty("access_token")]
         public string AccessToken
         {
             get => access_token;
@@ -53,7 +50,6 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     The lifetime in seconds of the access token.
         /// </summary>
-        //[fsProperty("expires_in")]
         public long ExpiresInSeconds
         {
             get => expires_in;
@@ -64,7 +60,6 @@ namespace Izhguzin.GoogleIdentity
         ///     The id_token, which is a JSON Web Token (JWT) as specified in
         ///     http://tools.ietf.org/html/draft-ietf-oauth-json-web-token
         /// </summary>
-        //[fsProperty("id_token")]
         public string IdToken
         {
             get => id_token;
@@ -76,7 +71,6 @@ namespace Izhguzin.GoogleIdentity
         ///     For example, the value "3600" denotes that the access token will expire in one hour from the time the
         ///     response was generated.
         /// </summary>
-        //[fsProperty("refresh_token")]
         public string RefreshToken
         {
             get => refresh_token;
@@ -86,7 +80,6 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     The scope of the access token as specified in http://tools.ietf.org/html/rfc6749#section-3.3.
         /// </summary>
-        //[fsProperty("scope")]
         public string Scope
         {
             get => scope;
@@ -96,14 +89,12 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     The token type as specified in http://tools.ietf.org/html/rfc6749#section-7.1.
         /// </summary>
-        //[fsProperty("token_type")]
         public string TokenType
         {
             get => token_type;
             internal set => token_type = value;
         }
 
-        /*[fsProperty("iss")]*/
         public DateTime IssuedUtc
         {
             get => DateTimeOffset.FromUnixTimeSeconds(iss).DateTime;

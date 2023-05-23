@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 using UnityEngine.Scripting;
 
 [assembly: AlwaysLinkAssembly]
+[assembly: Preserve]
 
 namespace Izhguzin.GoogleIdentity
 {
@@ -251,13 +252,7 @@ namespace Izhguzin.GoogleIdentity
 
         private void RefreshTokenProperties(TokenResponse tokenResponse, string json)
         {
-            TokenResponse newResponse = TokenResponse.FromJson(json);
-            tokenResponse.IdToken          = newResponse.IdToken;
-            tokenResponse.AccessToken      = newResponse.AccessToken;
-            tokenResponse.ExpiresInSeconds = newResponse.ExpiresInSeconds;
-            tokenResponse.IssuedUtc        = newResponse.IssuedUtc;
-            tokenResponse.Scope            = newResponse.Scope;
-            tokenResponse.TokenType        = newResponse.TokenType;
+            JsonUtility.FromJsonOverwrite(json, tokenResponse);
         }
 
         private void CheckResponseForErrors(UnityWebRequest tokenRequest, string method)

@@ -23,23 +23,19 @@
 using System;
 using UnityEngine;
 
-//using Unity.VisualScripting.FullSerializer;
-
 namespace Izhguzin.GoogleIdentity.JWTDecoder
 {
-    [Serializable /*, fsObject*/]
+    [Serializable]
     public class JwtHeader
     {
         #region Fileds and Properties
 
-        /*[fsProperty("alg")] */
         public string Algorithm
         {
             get => alg;
             set => alg = value;
         }
 
-        /*[fsProperty("typ")] */
         public string Type
         {
             get => typ;
@@ -52,12 +48,11 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
         #endregion
     }
 
-    [Serializable /*, fsObject*/]
+    [Serializable]
     public class JwtExpiration
     {
         #region Fileds and Properties
 
-        /*[fsProperty("exp")] */
         public double? Expiration
         {
             get => exp;

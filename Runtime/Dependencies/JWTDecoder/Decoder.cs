@@ -22,11 +22,7 @@
 
 using System;
 using System.Text;
-using Izhguzin.GoogleIdentity.JWTDecoder.Algorithms;
-using Izhguzin.GoogleIdentity.JWTDecoder.Helpers;
 using Izhguzin.GoogleIdentity.Utils;
-
-//using Unity.Plastic.Newtonsoft.Json;
 
 namespace Izhguzin.GoogleIdentity.JWTDecoder
 {
@@ -56,74 +52,6 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
             }
 
             throw new InvalidTokenPartsException("token");
-        }
-
-        /// <summary>
-        ///     Decodes the payload into the provided type.
-        /// </summary>
-        /// <returns>The payload.</returns>
-        /// <param name="token">A properly formatted .</param>
-        /// <typeparam name="T">The type you wish to decode into.</typeparam>
-        public static T DecodePayload<T>(string token) where T : class, new()
-        {
-            T payloadDecoded = StringSerializationAPI.Deserialize<T>(DecodeToken(token).Payload);
-            return payloadDecoded;
-        }
-
-        /// <summary>
-        ///     In case for some some crazed reason you want a client to validate the specified token rather than just letting the
-        ///     creator be authoritative.
-        /// </summary>
-        /// <returns>Validated?</returns>
-        /// <param name="token">The token to be validated.</param>
-        public static bool Validate(string token, string secret = null)
-        {
-            byte[]           secretBytes      = EncodingHelper.GetBytes(secret);
-            AlgorithmFactory algorithmFactory = new();
-
-            (JwtHeader Header, string Payload, string Verification) tokenDecoded = DecodeToken(token);
-
-            bool secretValid = string.IsNullOrEmpty(secret);
-            bool expirationValid = StringSerializationAPI.Deserialize<JwtExpiration>(tokenDecoded.Payload).Expiration ==
-                                   null;
-
-            // actually check the secret
-            if (secret != null)
-            {
-                IJwtAlgorithm alg = algorithmFactory.Create(tokenDecoded.Header.Algorithm);
-
-                byte[] bytesToSign = EncodingHelper.GetBytes(
-                    string.Concat(StringSerializationAPI.Serialize(tokenDecoded.Header), ".",
-                        tokenDecoded.Payload));
-
-                byte[] testSignature        = alg.Sign(secretBytes, bytesToSign);
-                string decodedTestSignature = Convert.ToBase64String(testSignature);
-
-                secretValid = decodedTestSignature == tokenDecoded.Verification;
-            }
-
-            //actually check the expiration
-            double? expiration = StringSerializationAPI.Deserialize<JwtExpiration>(tokenDecoded.Payload).Expiration;
-            if (expiration != null) expirationValid = DateTimeHelpers.FromUnixTime((long)expiration) < DateTime.Now;
-
-            return secretValid && expirationValid;
-        }
-
-        /// <summary>
-        ///     Is the token expired?
-        /// </summary>
-        /// <returns><c>true</c>, if expired, <c>false</c> otherwise.</returns>
-        /// <param name="token">Token.</param>
-        public static bool IsExpired(string token)
-        {
-            (JwtHeader Header, string Payload, string Verification) tokenDecoded = DecodeToken(token);
-            double? expiration = StringSerializationAPI.Deserialize<JwtExpiration>(tokenDecoded.Payload).Expiration;
-
-            bool isExpired = expiration != null;
-
-            if (expiration != null) isExpired = DateTimeHelpers.FromUnixTime((long)expiration) > DateTime.Now;
-
-            return isExpired;
         }
 
         private static string Base64DecodeToString(string toDecode)
