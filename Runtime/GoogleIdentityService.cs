@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Scripting;
+
+[assembly: AlwaysLinkAssembly]
 
 namespace Izhguzin.GoogleIdentity
 {
