@@ -9,15 +9,16 @@ namespace Izhguzin.GoogleIdentity
         [RequestParameter("code", true), Preserve]
         public string Code { [Preserve] get; set; }
 
-        [RequestParameter("redirect_uri", false)]
+        [RequestParameter("redirect_uri", false), Preserve]
         public string RedirectUri { get; set; }
 
-        [RequestParameter("client_id", true)] public string ClientId { get; set; }
+        [RequestParameter("client_id", true), Preserve]
+        public string ClientId { get; set; }
 
-        [RequestParameter("code_verifier", false)]
+        [RequestParameter("code_verifier", false), Preserve]
         public string CodeVerifier { get; set; }
 
-        [RequestParameter("client_secret", true)]
+        [RequestParameter("client_secret", true), Preserve]
         public string ClientSecret { get; set; }
 
         [RequestParameter("grant_type", false), Preserve]

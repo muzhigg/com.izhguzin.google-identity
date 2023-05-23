@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Utils
 {
-    public static class StringSerializationAPI
+    internal static class StringSerializationAPI
     {
         public static string Serialize<T>(T value) where T : class
         {

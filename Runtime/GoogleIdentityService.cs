@@ -3,10 +3,6 @@ using System.Threading.Tasks;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Scripting;
-
-[assembly: AlwaysLinkAssembly]
-[assembly: Preserve]
 
 namespace Izhguzin.GoogleIdentity
 {

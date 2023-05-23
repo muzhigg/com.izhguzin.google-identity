@@ -8,15 +8,16 @@ namespace Izhguzin.GoogleIdentity
 
         public override string EndPointUrl => GoogleAuthConstants.TokenUrl;
 
-        [RequestParameter("client_id", true)] public string ClientId { get; set; }
+        [RequestParameter("client_id", true), Preserve]
+        public string ClientId { get; set; }
 
-        [RequestParameter("client_secret", true)]
+        [RequestParameter("client_secret", true), Preserve]
         public string ClientSecret { get; set; }
 
         [RequestParameter("grant_type", true), Preserve]
         public string GrantType => "refresh_token";
 
-        [RequestParameter("refresh_token", true)]
+        [RequestParameter("refresh_token", true), Preserve]
         public string RefreshToken { get; set; }
 
         #endregion

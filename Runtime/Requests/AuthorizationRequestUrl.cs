@@ -22,27 +22,31 @@ namespace Izhguzin.GoogleIdentity
 
         #region Fileds and Properties
 
-        [RequestParameter("response_type", true)]
+        [RequestParameter("response_type", true), Preserve]
         public string ResponseType { get; set; }
 
-        [RequestParameter("client_id", true)] public string ClientId { get; set; }
+        [RequestParameter("client_id", true), Preserve]
+        public string ClientId { get; set; }
 
-        [RequestParameter("redirect_uri", true)]
+        [RequestParameter("redirect_uri", true), Preserve]
         public string RedirectUri { get; set; }
 
-        [RequestParameter("scope", true)] public string Scope { get; set; }
+        [RequestParameter("scope", true), Preserve]
+        public string Scope { get; set; }
 
-        [RequestParameter("code_challenge", false)]
+        [RequestParameter("code_challenge", false), Preserve]
         public string CodeChallenge => ProofCodeKey.codeChallenge;
 
         [RequestParameter("code_challenge_method", false), Preserve]
         public string CodeChallengeMethod => CodeChallenge == null ? null : ProofCodeKey.codeChallengeMethod;
 
-        [RequestParameter("state", false)] public string State { get; set; }
+        [RequestParameter("state", false), Preserve]
+        public string State { get; set; }
 
-        [RequestParameter("prompt", false)] public string Prompt { get; set; }
+        [RequestParameter("prompt", false), Preserve]
+        public string Prompt { get; set; }
 
-        [RequestParameter("access_type", false)]
+        [RequestParameter("access_type", false), Preserve]
         public string AccessType { get; set; }
 
         public ProofKey ProofCodeKey { get; set; }
