@@ -1,12 +1,12 @@
 {
     "name": "Izhguzin.GoogleIdentity",
     "rootNamespace": "Izhguzin.GoogleIdentity",
-    "references": [
-        "GUID:21b0c8d1703a94250bfac916590cea4f"
-    ],
+    "references": [],
     "includePlatforms": [
         "Android",
         "Editor",
+        "LinuxStandalone64",
+        "macOSStandalone",
         "WebGL",
         "WindowsStandalone32",
         "WindowsStandalone64"

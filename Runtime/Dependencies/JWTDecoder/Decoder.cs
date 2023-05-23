@@ -64,7 +64,7 @@ namespace Izhguzin.GoogleIdentity.JWTDecoder
         /// <returns>The payload.</returns>
         /// <param name="token">A properly formatted .</param>
         /// <typeparam name="T">The type you wish to decode into.</typeparam>
-        public static T DecodePayload<T>(string token)
+        public static T DecodePayload<T>(string token) where T : class, new()
         {
             T payloadDecoded = StringSerializationAPI.Deserialize<T>(DecodeToken(token).Payload);
             return payloadDecoded;

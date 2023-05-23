@@ -21,28 +21,53 @@
 // SOFTWARE.
 
 using System;
-using Unity.VisualScripting.FullSerializer;
+using UnityEngine;
+
+//using Unity.VisualScripting.FullSerializer;
 
 namespace Izhguzin.GoogleIdentity.JWTDecoder
 {
-    [Serializable, fsObject]
+    [Serializable /*, fsObject*/]
     public class JwtHeader
     {
         #region Fileds and Properties
 
-        [fsProperty("alg")] public string Algorithm { get; set; }
+        /*[fsProperty("alg")] */
+        public string Algorithm
+        {
+            get => alg;
+            set => alg = value;
+        }
 
-        [fsProperty("typ")] public string Type { get; set; }
+        /*[fsProperty("typ")] */
+        public string Type
+        {
+            get => typ;
+            set => typ = value;
+        }
+
+        [SerializeField] private string alg;
+        [SerializeField] private string typ;
 
         #endregion
     }
 
-    [Serializable, fsObject]
+    [Serializable /*, fsObject*/]
     public class JwtExpiration
     {
         #region Fileds and Properties
 
-        [fsProperty("exp")] public double? Expiration { get; set; }
+        /*[fsProperty("exp")] */
+        public double? Expiration
+        {
+            get => exp;
+            set
+            {
+                if (value != null) exp = value.Value;
+            }
+        }
+
+        [SerializeField] private double exp;
 
         #endregion
     }

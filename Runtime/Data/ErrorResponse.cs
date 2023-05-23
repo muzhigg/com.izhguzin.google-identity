@@ -1,13 +1,29 @@
 ﻿using System;
-using Unity.VisualScripting.FullSerializer;
+using UnityEngine;
+
+//using Unity.VisualScripting.FullSerializer;
 
 namespace Izhguzin.GoogleIdentity
 {
-    [Serializable, fsObject]
+    [Serializable /*, fsObject*/]
     internal class ErrorResponse
     {
-        [fsProperty("error")] public string Error { get; set; }
+        [SerializeField] private string error;
 
-        [fsProperty("error_description")] public string ErrorDescription { get; set; }
+        [SerializeField] private string error_description;
+
+        /*[fsProperty("error")]*/
+        public string Error
+        {
+            get => error;
+            set => error = value;
+        }
+
+        /*[fsProperty("error_description")] */
+        public string ErrorDescription
+        {
+            get => error_description;
+            set => error_description = value;
+        }
     }
 }

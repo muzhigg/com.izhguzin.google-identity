@@ -1,34 +1,42 @@
-using Unity.VisualScripting.FullSerializer;
+//using Unity.VisualScripting.FullSerializer;
+
 using UnityEngine;
 
 namespace Izhguzin.GoogleIdentity.Utils
 {
     public static class StringSerializationAPI
     {
-        public static string Serialize<T>(T value)
+        public static string Serialize<T>(T value) where T : class
         {
-            fsResult result = _serializer.TrySerialize(typeof(T), value, out fsData data);
-            result.AssertSuccess();
+            return JsonUtility.ToJson(value);
 
-            return fsJsonPrinter.CompressedJson(data);
+            //fsResult result = _serializer.TrySerialize(typeof(T), value, out fsData data);
+            //result.AssertSuccess();
+
+            //return fsJsonPrinter.CompressedJson(data);
         }
 
         /// <exception cref="JsonDeserializationException"></exception>
-        public static T Deserialize<T>(string json)
+        public static T Deserialize<T>(string json) where T : class, new()
         {
-            object deserializedToken = null;
-            fsResult result =
-                _serializer.TryDeserialize(fsJsonParser.Parse(json), typeof(T), ref deserializedToken);
-            result.AssertSuccess();
-            if (result.HasWarnings) Debug.LogWarning(result.FormattedMessages);
+            T result = new();
+            JsonUtility.FromJsonOverwrite(json, result);
 
-            if (deserializedToken is not T response)
-                throw new JsonDeserializationException($"Failed to deserialize JSON to {typeof(T).Name}. " +
-                                                       $"Expected an object of type {typeof(T).Name} but received {deserializedToken.GetType().Name}.");
+            return result;
 
-            return response;
+            //object deserializedToken = null;
+            //fsResult result =
+            //    _serializer.TryDeserialize(fsJsonParser.Parse(json), typeof(T), ref deserializedToken);
+            //result.AssertSuccess();
+            //if (result.HasWarnings) Debug.LogWarning(result.FormattedMessages);
+
+            //if (deserializedToken is not T response)
+            //    throw new JsonDeserializationException($"Failed to deserialize JSON to {typeof(T).Name}. " +
+            //                                           $"Expected an object of type {typeof(T).Name} but received {deserializedToken.GetType().Name}.");
+
+            //return response;
         }
 
-        private static readonly fsSerializer _serializer = new();
+        //private static readonly fsSerializer _serializer = new();
     }
 }
