@@ -6,7 +6,8 @@ namespace Izhguzin.GoogleIdentity
     {
         #region Fileds and Properties
 
-        [RequestParameter("code", true)] public string Code { get; set; }
+        [RequestParameter("code", true), Preserve]
+        public string Code { [Preserve] get; set; }
 
         [RequestParameter("redirect_uri", false)]
         public string RedirectUri { get; set; }
