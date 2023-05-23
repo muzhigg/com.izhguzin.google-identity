@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Izhguzin.GoogleIdentity.JWTDecoder;
 using Izhguzin.GoogleIdentity.Utils;
 using UnityEngine;
 
@@ -139,7 +140,7 @@ namespace Izhguzin.GoogleIdentity
             if (string.IsNullOrEmpty(IdToken)) return null;
 
             UserCredential result = new();
-            JsonUtility.FromJsonOverwrite(IdToken, result);
+            JsonUtility.FromJsonOverwrite(Decoder.DecodeToken(IdToken).Payload, result);
             return result;
 
             //return Decoder.DecodePayload<UserCredential>(IdToken);
