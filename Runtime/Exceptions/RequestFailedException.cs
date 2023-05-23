@@ -28,5 +28,11 @@ namespace Izhguzin.GoogleIdentity
         {
             ErrorCode = errorCode;
         }
+
+        public RequestFailedException(int errorCode, string message, Exception innerException) : base(message,
+            innerException)
+        {
+            ErrorCode = errorCode;
+        }
     }
 }

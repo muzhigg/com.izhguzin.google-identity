@@ -15,5 +15,8 @@ namespace Izhguzin.GoogleIdentity
         }
 
         public AuthorizationFailedException(int errorCode, string message) : base(errorCode, message) { }
+
+        public AuthorizationFailedException(int errorCode, string message, Exception innerException) : base(errorCode,
+            message, innerException) { }
     }
 }

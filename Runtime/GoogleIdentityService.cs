@@ -144,7 +144,7 @@ namespace Izhguzin.GoogleIdentity
             catch (Exception exception)
             {
                 throw new AuthorizationFailedException(CommonErrorCodes.DeserializationError,
-                    $"Deserialization error: {exception.Message}");
+                    $"Deserialization error: {exception.Message}", exception);
             }
         }
 

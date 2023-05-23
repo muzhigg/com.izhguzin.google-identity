@@ -63,12 +63,12 @@ Requirements:
 A compatible Android device that runs Android 4.4 or newer and includes the Google Play Store or an emulator with an AVD that runs the Google APIs platform based on Android 4.2.2 or newer and has Google Play services version 15.0.0 or newer.
 
 The package uses the Google Sign In library on Android devices. To use the Google Identity package, you need to follow these steps:
-
-1. Download and import the External Dependency Manager for Unity plugin into your project. https://github.com/googlesamples/unity-jar-resolver/tags
-2. Sign your application with your key in the project settings.
-3. In the project settings, select "Custom Main Manifest", "Custom Main Gradle Template", and "Custom Gradle Properties Template".
-4. Open gradleTemplate.properties in a text editor and remove the line "android.enableR8=MINIFY_WITH_R_EIGHT".
-5. Resolve Android dependencies (Assets -> External Dependency Manager -> Android Resolver -> Resolve).
+ 
+1. Sign your application with your key in the project settings.
+2. In the project settings, select "Custom Main Manifest", "Custom Main Gradle Template", and "Custom Gradle Properties Template".
+3. __Important:__ Also, in the "Other Settings" section, override the default package name.
+4. Download and import the External Dependency Manager for Unity plugin into your project. https://github.com/googlesamples/unity-jar-resolver/tags
+5. Resolve Android dependencies (Assets -> External Dependency Manager -> Android Resolver -> Resolve). 
 6. You also need to edit AndroidManifest.xml. If you do not plan to use your own activity, replace the following lines.
 ```
 <activity android:name="com.unity3d.player.UnityPlayerActivity"
@@ -90,4 +90,31 @@ The package uses the Google Sign In library on Android devices. To use the Googl
             </intent-filter>
             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
         </activity>
+```
+8. Open the Credentials page in the Google Cloud console and create a new OAuth client ID with the Android application type. In the Package Name field, enter the name from step 3. Also, enter the SHA1 fingerprint of your key. __Note__: You will not need the Android Client ID, but it must be created.
+9. Now you can initialize the GoogleIdentityService:
+```csharp
+// Example code for initializing the Google Identity Service
+using Izhguzin.GoogleIdentity;
+using UnityEngine;
+
+public class ExampleScript : MonoBehaviour
+{
+    private async void Start()
+    {
+        GoogleAuthOptions.Builder optionsBuilder = new();
+        optionsBuilder.SetCredentials("your-client-id", "your-client-secret")
+            // Set only those scopes that you selected on the OAuth consent screen
+            .SetScopes(Scopes.OpenId, Scopes.Email, Scopes.Profile);
+
+        try
+        {
+            await GoogleIdentityService.InitializeAsync(optionsBuilder.Build());
+        }
+        catch (InitializationException exception)
+        {
+            Debug.LogError($"Failed to initialize Google Identity Service: {exception.Message}");
+        }
+    }
+}
 ```

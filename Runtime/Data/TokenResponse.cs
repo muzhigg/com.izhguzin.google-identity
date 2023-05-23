@@ -147,7 +147,7 @@ namespace Izhguzin.GoogleIdentity
             }
             catch (Exception exception)
             {
-                throw new JsonDeserializationException($"Error deserializing JSON: {exception.Message}");
+                throw new JsonDeserializationException(exception.Message, exception);
             }
         }
 
