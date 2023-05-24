@@ -4,10 +4,10 @@ The Google Identity Package provides a convenient way to integrate Google Identi
 
 # Features
 
-*Seamless integration with Google Identity and OAuth 2.0.  
-*Supports Standalone, Android and WebGL platforms.  
-*Simplifies the authorization process and token management.  
-*Customizable HTML response page after completing authorization.  
+* Seamless integration with Google Identity and OAuth 2.0.  
+* Supports Standalone, Android and WebGL platforms.  
+* Simplifies the authorization process and token management.  
+* Customizable HTML response page after completing authorization.  
 
 # Installation
 
@@ -433,19 +433,19 @@ public class ExampleScript : MonoBehaviour
 
 # FAQ
 
-1. __I lost my RefreshToken.__
+1. __I lost my RefreshToken.__  
 Using a non-expired token, revoke access by calling the TokenResponse.RevokeAsync method, and then authorize again.
 
-2. __How can I find out what specific error occurred during the request?__
+2. __How can I find out what specific error occurred during the request?__  
 Each method, when an error occurs, will throw a RequestFailedException or AuthorizationFailedException. These classes contain an ErrorCode property, which can be compared to constants from the CommonErrorCodes and AndroidCommonErrorCodes classes. This way, you can determine whether the error is critical or if the user simply changed their mind about authorizing.
 __Note__: CommonErrorCodes.SignInCanceled doesn't always mean that the user closed the authorization window. If you've configured your project incorrectly in the Google Cloud console, there may be an error instead of the agreement screen in the authorization window, and when the user closes it, you'll get a SignInCanceled error.
 
-3. __Is this package only for user identification?__
+3. __Is this package only for user identification?__  
 No. You can obtain access tokens for various Google APIs if you set the necessary scopes.
 
-4. __I plan to use my own Android Activity.__
+4. __I plan to use my own Android Activity.__  
 You can use any activity, just add a dependency on the [com.izhguzin.gsi](https://github.com/muzhigg/android-gis-proxy-for-unity) library and initialize the GoogleSignInClientProxy. Keep in mind that your custom activity must inherit from AppCompatActivity.
 
 # Known issues
 
-When authorizing on the WebGL platform, instead of the consent screen, there may be an error "unauthorized JavaScript origin". This error is caused by the fact that Google accepts the origin along with the query parameters. Usually, trying to log in again helps.
++ When authorizing on the WebGL platform, instead of the consent screen, there may be an error "unauthorized JavaScript origin". This error is caused by the fact that Google accepts the origin along with the query parameters. Usually, trying to log in again helps.
