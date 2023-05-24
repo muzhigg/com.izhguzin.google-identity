@@ -91,7 +91,7 @@ namespace Izhguzin.GoogleIdentity
             Options = options;
         }
 
-        public abstract Task<TokenResponse> Authorize();
+        public abstract Task<TokenResponse> AuthorizeAsync();
 
         public async Task<TokenResponse> LoadStoredTokenAsync(string userId)
         {

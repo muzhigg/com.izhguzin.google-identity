@@ -118,3 +118,172 @@ public class ExampleScript : MonoBehaviour
     }
 }
 ```
+
+## WebGL
+
+On the WebGL platform, the package uses the Google 3P Authorization JavaScript library. Before you start working with it, you will also need to follow a few steps:
+
+1. Open the Credentials page in the Google Cloud console and edit your web OAuth client ID. You need to specify authorized JavaScript origins. If you are testing your project on a local server, add the URI http://localhost. In other cases, specify the actual origin.
+2. Now you can initialize the GoogleIdentityService:
+```csharp
+// Example code for initializing the Google Identity Service
+using Izhguzin.GoogleIdentity;
+using UnityEngine;
+
+public class ExampleScript : MonoBehaviour
+{
+    private async void Start()
+    {
+        GoogleAuthOptions.Builder optionsBuilder = new();
+        optionsBuilder.SetCredentials("your-client-id", "your-client-secret")
+            // Set only those scopes that you selected on the OAuth consent screen
+            .SetScopes(Scopes.OpenId, Scopes.Email, Scopes.Profile);
+
+        try
+        {
+            await GoogleIdentityService.InitializeAsync(optionsBuilder.Build());
+        }
+        catch (InitializationException exception)
+        {
+            Debug.LogError($"Failed to initialize Google Identity Service: {exception.Message}");
+        }
+    }
+}
+```
+
+## Authorization
+
+To start the authorization flow, simply call the GoogleIdentityService.AuthorizeAsync() method.
+```csharp
+    public async Task AuthorizeAsync()
+    {
+        try
+        {
+            TokenResponse  response   = await GoogleIdentityService.Instance.AuthorizeAsync();
+            UserCredential credential = response.GetUserCredential();
+
+            Debug.LogWarning($"Hello {credential.GivenName}!");
+        }
+        catch (AuthorizationFailedException e)
+        {
+            Debug.LogException(e);
+        }
+    }
+```
+
+## Refresh Token and Revoke Access
+
+The token you received is valid for one hour. After it expires, you can refresh it.
+```csharp
+    public async Task RefreshAsync(TokenResponse tokenResponse)
+    {
+        try
+        {
+            if (tokenResponse.IsEffectivelyExpired()) 
+                await tokenResponse.RefreshTokenAsync();
+        }
+        catch (RequestFailedException exception)
+        {
+            Debug.LogException(exception);
+        }
+    }
+```
+
+You can also provide users with the ability to revoke access.
+```csharp
+    public async Task RevokeAccessAsync(TokenResponse tokenResponse)
+    {
+        try
+        {
+            await tokenResponse.RevokeAccessAsync();
+        }
+        catch (RequestFailedException exception)
+        {
+            Debug.LogException(exception);
+        }
+    }
+```
+
+## Token Storage
+
+If you want to persist the token between sessions, you can use the ITokenStorage interface to implement token storage and retrieval.
+
+> Why is this necessary? During the user's first authorization, the TokenResponse object will contain a RefreshToken that is needed to refresh the AccessToken. If you force the user to authorize again, Google will not provide you with a RefreshToken.
+
+```csharp
+	using System.Threading.Tasks;
+using Izhguzin.GoogleIdentity;
+using UnityEngine;
+
+public class TokenStorageExample : ITokenStorage
+{
+    public Task<bool> SaveTokenAsync(string userId, string jsonToken)
+    {
+        // This is just an example.
+        PlayerPrefs.SetString(userId, jsonToken);
+
+        return Task.FromResult(true);
+    }
+
+    public Task<string> LoadTokenAsync(string userId)
+    {
+        // This is just an example.
+        string jsonToken = PlayerPrefs.GetString(userId);
+
+        return Task.FromResult(jsonToken);
+    }
+}
+```
+
+Complete the initialization by setting the SetTokenStorage option.
+
+```csharp
+    private async void Start()
+    {
+        GoogleAuthOptions.Builder optionsBuilder = new();
+        optionsBuilder.SetCredentials("your-client-id", "your-client-secret")
+            .SetScopes(Scopes.OpenId, Scopes.Email, Scopes.Profile)
+            .SetTokenStorage(new TokenStorageExample());
+
+        try
+        {
+            await GoogleIdentityService.InitializeAsync(optionsBuilder.Build());
+        }
+        catch (InitializationException exception)
+        {
+            Debug.LogError($"Failed to initialize Google Identity Service: {exception.Message}");
+        }
+    }
+```
+
+Now, after successful authorization, you can save your token.
+```csharp
+    public async Task AuthorizeAsync()
+    {
+        try
+        {
+            TokenResponse response = await GoogleIdentityService.Instance.AuthorizeAsync();
+
+            // The method can return false if the save operation failed,
+            // as well as if your TokenResponse does not contain a RefreshToken.
+            bool successfullySaved = await response.StoreAsync("default");
+
+            if (successfullySaved == false && string.IsNullOrEmpty(response.RefreshToken))
+            {
+                Debug.LogError("You have lost the RefreshToken!");
+            }
+        }
+        catch (AuthorizationFailedException e)
+        {
+            Debug.LogException(e);
+        }
+    }
+```
+
+# Example with Unity Gaming Services
+
+Below is an example of using GoogleIdentityService together with Unity Authentication and Unity Cloud Save packages.
+
+```csharp
+
+```

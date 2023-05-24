@@ -57,7 +57,7 @@ namespace Izhguzin.GoogleIdentity
 
         public WebGLIdentityService(GoogleAuthOptions options) : base(options) { }
 
-        public override Task<TokenResponse> Authorize()
+        public override Task<TokenResponse> AuthorizeAsync()
         {
             ValidateInProgress();
             InProgress = true;

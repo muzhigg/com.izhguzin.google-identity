@@ -10,7 +10,7 @@ namespace Izhguzin.GoogleIdentity
     {
         public StandaloneIdentityService(GoogleAuthOptions options) : base(options) { }
 
-        public override async Task<TokenResponse> Authorize()
+        public override async Task<TokenResponse> AuthorizeAsync()
         {
             ValidateInProgress();
             InProgress = true;

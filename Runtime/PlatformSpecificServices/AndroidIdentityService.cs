@@ -13,7 +13,7 @@ namespace Izhguzin.GoogleIdentity
         public AndroidIdentityService(GoogleAuthOptions options) : base(options) { }
 
         [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
-        public override Task<TokenResponse> Authorize()
+        public override Task<TokenResponse> AuthorizeAsync()
         {
             ValidateInProgress();
             InProgress = true;

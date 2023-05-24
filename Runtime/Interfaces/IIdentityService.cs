@@ -10,7 +10,7 @@ namespace Izhguzin.GoogleIdentity
         /// <summary>
         ///     Asynchronously authorizes the user and returns a <see cref="TokenResponse" /> representing the authorization token.
         /// </summary>
-        Task<TokenResponse> Authorize();
+        Task<TokenResponse> AuthorizeAsync();
 
         /// <summary>
         ///     Asynchronously loads the stored token for the specified userId from the storage provided by the developer.
