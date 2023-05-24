@@ -4,10 +4,10 @@ The Google Identity Package provides a convenient way to integrate Google Identi
 
 # Features
 
-*Seamless integration with Google Identity and OAuth 2.0.
-*Supports Standalone, Android and WebGL platforms.
-*Simplifies the authorization process and token management.
-*Customizable HTML response page after completing authorization.
+*Seamless integration with Google Identity and OAuth 2.0.  
+*Supports Standalone, Android and WebGL platforms.  
+*Simplifies the authorization process and token management.  
+*Customizable HTML response page after completing authorization.  
 
 # Installation
 
