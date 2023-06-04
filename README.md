@@ -297,23 +297,6 @@ using Unity.Services.Core;
 using UnityEngine;
 using RequestFailedException = Izhguzin.GoogleIdentity.RequestFailedException;
 
-public class TokenStorageExample : ITokenStorage
-{
-    public async Task<bool> SaveTokenAsync(string userId, string jsonToken)
-    {
-        Dictionary<string, object> data = new Dictionary<string, object> { { userId, jsonToken } };
-        await CloudSaveService.Instance.Data.ForceSaveAsync(data);
-        return true;
-    }
-
-    public async Task<string> LoadTokenAsync(string userId)
-    {
-        Dictionary<string, string> savedData = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { userId });
-
-        return savedData[userId];
-    }
-}
-
 public class ExampleScript : MonoBehaviour
 {
     private TokenResponse _googleTokenResponse;
@@ -339,8 +322,7 @@ public class ExampleScript : MonoBehaviour
         GoogleAuthOptions.Builder optionsBuilder = new();
         optionsBuilder.SetCredentials("your-client-id", "your-client-secret")
             .SetScopes(Scopes.OpenId, Scopes.Email, Scopes.Profile)
-            .SetListeningTcpPorts(new[] { 5000, 5001, 5002, 5003, 5005 })
-            .SetTokenStorage(new TokenStorageExample());
+            .SetListeningTcpPorts(new[] { 5000, 5001, 5002, 5003, 5005 });
 
         try
         {
@@ -383,51 +365,19 @@ public class ExampleScript : MonoBehaviour
         try
         {
             _googleTokenResponse = await GoogleIdentityService.Instance.AuthorizeAsync();
-
-            if (string.IsNullOrEmpty(_googleTokenResponse.RefreshToken) == false)
-                // Since we are using a private user cloud
-                // on the Unity server, we can leave out the userId.
-                await _googleTokenResponse.StoreAsync("google-token");
-
-            await AuthenticationService.Instance.LinkWithGoogleAsync(_googleTokenResponse.IdToken, new LinkOptions());
+            await AuthenticationService.Instance.LinkWithGoogleAsync(_googleTokenResponse.IdToken);
         }
+        // Google Identity Exception
         catch (AuthorizationFailedException exception)
         {
             Debug.LogException(exception);
         }
+        // Unity Authentication Exception
         catch (AuthenticationException exception) when (exception.ErrorCode ==
                                                         AuthenticationErrorCodes.AccountAlreadyLinked)
         {
             AuthenticationService.Instance.SignOut(true);
             await AuthenticationService.Instance.SignInWithGoogleAsync(_googleTokenResponse.IdToken);
-        }
-    }
-
-    public async Task RefreshAsync(TokenResponse tokenResponse)
-    {
-        if (IsSignedInWithGoogle == false) return;
-
-        try
-        {
-            await tokenResponse.RefreshTokenAsync();
-            await tokenResponse.StoreAsync("google-token");
-        }
-        catch (RequestFailedException exception)
-        {
-            Debug.LogException(exception);
-        }
-    }
-
-    public async Task RevokeAccessAsync(TokenResponse tokenResponse)
-    {
-        try
-        {
-            await tokenResponse.RevokeAccessAsync();
-            AuthenticationService.Instance.SignOut(true);
-        }
-        catch (RequestFailedException exception)
-        {
-            Debug.LogException(exception);
         }
     }
 }
