@@ -24,7 +24,7 @@ namespace Izhguzin.GoogleIdentity.Android
                 if (scopes.Length == 0) return this;
 
                 IntPtr clazz =
-                    AndroidJNI.FindClass("com.google.android.gms.common.api.Scope");
+                    AndroidJNI.FindClass("com/google/android/gms/common/api/Scope");
 
                 IntPtr objArray =
                     AndroidJNI.NewObjectArray(scopes.Length - 1, clazz,
